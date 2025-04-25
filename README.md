@@ -1,18 +1,15 @@
-<div style="display: flex; align-items: center;">
-  <img
-    src="ACUCyS_CTF_Logo.png"
-    alt="ACUCyS CTF Logo"
-    width="100"
-    style="border-radius: 15%;"
-  />
-
-  <div style="flex: 1; text-align: left; margin-left: 20px;">
-    <h1 style="margin: 0;">ACUCyS CTF</h1>
-    <p style="margin: 0.5em 0 1em;">
-      A Discord bot designed for the ACUCyS CTF event, seamlessly integrating with CTFd to let users browse challenges, track progress on leaderboards, and more — all from within Discord.
-    </p>
-  </div>
+<div>
+  <img width="170" align="left" src="ACUCyS_CTF_Logo.png" alt="ACUCyS Logo">
+  <h1>ACUCyS CTF</h1>
+  <p>
+    A Discord bot designed for the ACUCyS CTF event, seamlessly integrating with
+    <a href="https://ctfd.io/">CTFd</a> to let users browse challenges, track progress on
+    leaderboards, and more — all from within Discord.
+  </p>
 </div>
+
+![NodeJS](https://img.shields.io/badge/NodeJS-v22%2B-%235FA04E?style=for-the-badge&logo=nodedotjs&logoColor=white&logoSize=auto)
+![Prettier](https://img.shields.io/badge/Prettier-%23F7B93E?style=for-the-badge&logo=prettier&logoColor=black&logoSize=auto)
 
 ## 📂 Project Structure
 
