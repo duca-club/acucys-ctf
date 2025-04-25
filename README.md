@@ -1,5 +1,5 @@
 <div>
-  <img width="170" align="left" src="ACUCyS_CTF_Logo.png" alt="ACUCyS Logo">
+  <img width="200" align="left" src="ACUCyS_CTF_Logo.png" alt="ACUCyS Logo">
   <h1>ACUCyS CTF</h1>
   <p>
     A Discord bot designed for the ACUCyS CTF event, seamlessly integrating with
