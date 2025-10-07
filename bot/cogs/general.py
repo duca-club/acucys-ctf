@@ -23,7 +23,7 @@ class General(commands.Cog):
         if self.client.user:
             logger.info(f"Logged in as {self.client.user.name}")
         else:
-            logger.warning("Unable to client's name!")
+            logger.warning("Unable to get client's name!")
         logger.info(f"Discord.py API version: {discord.__version__}")
         logger.info(f"Python version: {python_version()}")
 

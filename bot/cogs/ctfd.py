@@ -1,6 +1,7 @@
-import os
-import aiohttp
-import asyncio
+# import os
+# import aiohttp
+# import asyncio
+from bot.utils.ctfd_api import CTFd_API
 
 import discord
 from discord import app_commands
@@ -20,50 +21,26 @@ class CtfD(commands.Cog):
     async def scoreboard(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking=True)
 
-        access_token = os.getenv("CTFD_ACCESS_TOKEN")
-        if not access_token:
-            await interaction.followup.send("Server error! Big OOF!", ephemeral=True)
-            return
+        try:
+            scoreboard = await CTFd_API.get_scoreboard()
+            if not scoreboard:
+                await interaction.followup.send("No scoreboard data found.", ephemeral=True)
+                return
 
-        ENV_CTFD_INSTANCE_URL = os.getenv("CTFD_INSTANCE_URL")
-        url = f"{ENV_CTFD_INSTANCE_URL}/api/v1/scoreboard"
-        headers = {
-            "Authorization": f"Token {access_token}",
-            "Accept": "application/json"
-        }
+            embed = discord.Embed(
+                title=":trophy: CTFd Scoreboard",
+                color=discord.Color.gold()
+            )
 
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.get(url, headers=headers, timeout=10) as response: # type: ignore
-                    if response.status == 200:
-                        data = await response.json()
-                        scoreboard = data.get("data", [])
+            for i, entry in enumerate(scoreboard[:10], start=1):  # top 10
+                name = entry.get("name", "Unknown")
+                score = entry.get("score", 0)
+                embed.add_field(name=f"{i}. {name}", value=f"*{score} points*", inline=False)
 
-                        if not scoreboard:
-                            await interaction.followup.send("No scoreboard data found.", ephemeral=True)
-                            return
+            await interaction.followup.send(embed=embed)
 
-                        embed = discord.Embed(
-                            title=":trophy: CTFd Scoreboard",
-                            color=discord.Color.gold()
-                        )
-
-                        for i, entry in enumerate(scoreboard[:10], start=1):  # top 10
-                            name = entry.get("name", "Unknown")
-                            score = entry.get("score", 0)
-                            embed.add_field(name=f"{i}. {name}", value=f"*{score} points*", inline=False)
-
-                        await interaction.followup.send(embed=embed)
-
-                    else:
-                        await interaction.followup.send(f"⚠️ Failed to fetch scoreboard (HTTP {response.status})", ephemeral=True)
-
-            except asyncio.TimeoutError:
-                await interaction.followup.send("Request timed out. Try again later!", ephemeral=True)
-
-            # except aiohttp.ClientError:
-            except Exception:
-                await interaction.followup.send(f"Oopsie Error!", ephemeral=True)
+        except Exception:
+            await interaction.followup.send("An unexpected error occurred while fetching the scoreboard.", ephemeral=True)
 
 
 async def setup(client: commands.Bot):

@@ -5,7 +5,8 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 from loguru import logger
-from dotenv import load_dotenv
+
+from bot.utils.environment import ENV_BOT_TOKEN
 
 
 # ---------------------
@@ -24,13 +25,6 @@ logger.add(
     rotation="2 MB"
 )
 
-
-# ---------------------
-# env vars
-# ---------------------
-
-load_dotenv()
-ENV_BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 
 # ---------------------
