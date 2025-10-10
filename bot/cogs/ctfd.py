@@ -6,6 +6,7 @@ from bot.utils.ctfd_api import CTFd_API
 import discord
 from discord import app_commands
 from discord.ext import commands
+import datetime
 
 
 class CtfD(commands.Cog):
@@ -29,15 +30,19 @@ class CtfD(commands.Cog):
 
             embed = discord.Embed(
                 title=":trophy: CTFd Scoreboard",
-                color=discord.Color.gold()
+                color=discord.Color.gold(),
+                timestamp=datetime.datetime.now(datetime.timezone.utc)
             )
+            embed.set_author(name=self.client.user.name, icon_url=self.client.user.display_avatar.url) # type: ignore
 
             for i, entry in enumerate(scoreboard[:10], start=1):  # top 10
+                print(entry)
                 name = entry.get("name", "Unknown")
                 score = entry.get("score", 0)
-                embed.add_field(name=f"{i}. {name}", value=f"*{score} points*", inline=False)
+                members = entry.get("members", [])
+                embed.add_field(name=f"{i}. {name}", value=f"Score: *{score} points*\nMembers: *{len(members)}*", inline=False)
 
-            await interaction.followup.send(embed=embed)
+            await interaction.followup.send(embed=embed, ephemeral=True)
 
         except Exception:
             await interaction.followup.send("An unexpected error occurred while fetching the scoreboard.", ephemeral=True)
