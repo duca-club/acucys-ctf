@@ -56,7 +56,7 @@ class TeamBrowser(discord.ui.View):
 
         if members:
             member_lines = "\n".join(
-                f"• **{m.get('name', 'Unknown')}** — {m.get('score', 0)} pts"
+                f"• **{m.get('name', 'Unknown')}**: {m.get('score', 0)} pts"
                 for m in members
             )
             embed.add_field(name="Members", value=member_lines, inline=False)
