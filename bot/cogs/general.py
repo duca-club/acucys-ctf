@@ -36,20 +36,24 @@ class General(commands.Cog):
             )
         )
 
-        # todo: bad code. find a proper way to do this later
-        _tmp_filecheck = ".DO_NOT_DELETE.txt"
-        if not os.path.isfile(_tmp_filecheck):
-            synced = await self.client.tree.sync()
-            logger.debug(f"Synced: {[(str(item.name)+'-'+str(item.id)) for item in synced]}")
-            logger.success(f"Synced {len(synced)} Slash Commands")
-            with open(_tmp_filecheck, "w", encoding="utf-8") as _file:
-                _file.write(
-                    "Deleting this file and restarting the bot\n"
-                    "will make the bot register its command tree\n"
-                    "once again"
-                )
+        # todo: remove this after confirming further
+        # -----
+        # _tmp_filecheck = ".DO_NOT_DELETE.txt"
+        # if not os.path.isfile(_tmp_filecheck):
+        #     synced = await self.client.tree.sync()
+        #     logger.debug(f"Synced: {[(str(item.name)+'-'+str(item.id)) for item in synced]}")
+        #     logger.success(f"Synced {len(synced)} Slash Commands")
+        #     with open(_tmp_filecheck, "w", encoding="utf-8") as _file:
+        #         _file.write(
+        #             "Deleting this file and restarting the bot\n"
+        #             "will make the bot register its command tree\n"
+        #             "once again"
+        #         )
 
         logger.success("Bot is ready!")
+    
+    async def setup_hook(self):
+        await self.client.tree.sync()
 
     @app_commands.command(name="uptime", description="Displays how long the bot has been running.")
     async def uptime(self, interaction: discord.Interaction):

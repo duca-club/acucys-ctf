@@ -31,27 +31,37 @@ logger.add(
 # discord bot
 # ---------------------
 
-client = commands.Bot(command_prefix=".", intents=discord.Intents.all())
+class MyBot(commands.Bot):
+    def __init__(self):
+        intents = discord.Intents.all()
+        super().__init__(command_prefix=".", intents=intents)
+
+    # the proper way to do this:
+    #   https://discordpy.readthedocs.io/en/stable/ext/commands/api.html?highlight=setup_hook#discord.ext.commands.Bot.setup_hook
+    async def setup_hook(self):
+        for filename in os.listdir("./bot/cogs"):
+            if filename.endswith(".py"):
+                await self.load_extension(f"bot.cogs.{filename[:-3]}")
+                logger.info(f"Loaded: bot.cogs.{filename[:-3]}")
+
+        synced = await self.tree.sync()
+        logger.success(f"Synced {len(synced)} Slash Commands globally.")
+        logger.debug(f"Synced: {[cmd.name for cmd in synced]}")
+
+client = MyBot()
 
 
-@client.tree.command(name="sync", description="Sync Commands Globally")
-async def sync(interaction: discord.Interaction):
+@client.tree.command(name="sync", description="Sync slash commands globally")
+async def sync_command(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True)
     synced = await client.tree.sync()
-    logger.debug(f"Synced: {synced}")
-    logger.success(f'Synced {len(synced)} Slash Commands')
-    logger.debug('Command tree synced.')
+    logger.success(f"Manually synced {len(synced)} commands.")
+    await interaction.followup.send(f"✅ Synced {len(synced)} slash commands globally.", ephemeral=True)
 
-async def load_extensions():
-    for filename in os.listdir('./bot/cogs'):
-        if filename.endswith('.py'):
-            await client.load_extension(f'bot.cogs.{filename[:-3]}')
-            logger.info(f"Loaded: bot.cogs.{filename[:-3]}")
 
-async def start_bot():
+async def main():
     async with client:
-        await load_extensions()
-        await client.start(token=ENV_BOT_TOKEN, reconnect=True)
-
+        await client.start(ENV_BOT_TOKEN, reconnect=True)
 
 if __name__ == "__main__":
-    asyncio.run(start_bot())
+    asyncio.run(main())
