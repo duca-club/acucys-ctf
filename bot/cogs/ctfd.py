@@ -5,7 +5,7 @@ from discord.ext import commands
 from bot.utils.ctfd_api import CTFd_API
 
 
-class TeamBrowser(discord.ui.View):
+class ViewScoreboard(discord.ui.View):
     def __init__(self, scoreboard, current_index=0):
         super().__init__(timeout=180)
         self.scoreboard = scoreboard
@@ -110,7 +110,7 @@ class CtfD(commands.Cog):
             scoreboard = sorted(scoreboard, key=lambda x: x.get("pos", 9999))[:10]
 
             # Default = show full list view
-            view = TeamBrowser(scoreboard)
+            view = ViewScoreboard(scoreboard)
             embed = view.get_list_embed()
 
             await interaction.followup.send(embed=embed, view=view, ephemeral=True)
