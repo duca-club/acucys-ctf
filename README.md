@@ -8,4 +8,18 @@
   </p>
 </div>
 
+<br><br/>
+<br><br/>
 
+# Developer Notes
+
+To get the API key for the CTFd Demo Instance, login at [/login](https://demo.ctfd.io/login) as either:
+
+- Administrator
+  - Username: `admin`
+  - Password: `password`
+- User
+  - Username: `user`
+  - Password: `password`
+
+Next, head to [/settings](https://demo.ctfd.io/settings) and create a new access token.
