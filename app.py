@@ -50,15 +50,6 @@ class MyBot(commands.Bot):
 
 client = MyBot()
 
-
-@client.tree.command(name="sync", description="Sync slash commands globally")
-async def sync_command(interaction: discord.Interaction):
-    await interaction.response.defer(ephemeral=True)
-    synced = await client.tree.sync()
-    logger.success(f"Manually synced {len(synced)} commands.")
-    await interaction.followup.send(f"✅ Synced {len(synced)} slash commands globally.", ephemeral=True)
-
-
 async def main():
     async with client:
         await client.start(ENV_BOT_TOKEN, reconnect=True)
