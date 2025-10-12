@@ -5,7 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 from bot.utils.ctfd_api import CTFd_API
 from loguru import logger
-
+from bot.utils.environment import is_dev_mode
 
 class ViewScoreboard(discord.ui.View):
     def __init__(self, scoreboard, current_index=0):
@@ -128,11 +128,11 @@ class CtfD(commands.Cog):
             await interaction.followup.send(embed=embed, view=view, ephemeral=True)
 
         except Exception as e:
-            await interaction.followup.send(
-                f"An unexpected error occurred while fetching the scoreboard.\n```{e}```",
-                ephemeral=True
-            )
-    
+            if is_dev_mode():
+                await interaction.followup.send(f"An unexpected error occurred while fetching the scoreboard.\n```{e}```", ephemeral=True)
+            else:
+                await interaction.followup.send(f"An unexpected error occurred while fetching the scoreboard.", ephemeral=True)
+
     @app_commands.command(name="challenges", description="Get the challenges list.")
     @app_commands.describe(category="Filter challenges by category")
     async def challenges(self, interaction: discord.Interaction, category: str):
@@ -184,10 +184,10 @@ class CtfD(commands.Cog):
                 await interaction.followup.send(embed=embed, ephemeral=True)
 
         except Exception as e:
-            await interaction.followup.send(
-                f"An unexpected error occurred while fetching the scoreboard.\n```{e}```",
-                ephemeral=True
-            )
+            if is_dev_mode():
+                await interaction.followup.send(f"An unexpected error occurred while fetching the challenges.\n```{e}```", ephemeral=True)
+            else:
+                await interaction.followup.send(f"An unexpected error occurred while fetching the challenges.", ephemeral=True)
 
     @challenges.autocomplete("category")
     async def category_autocomplete(self, interaction: discord.Interaction, current: str):

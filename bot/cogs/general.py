@@ -7,6 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from loguru import logger
+from bot.utils.environment import is_dev_mode
 
 
 class General(commands.Cog):
@@ -32,7 +33,7 @@ class General(commands.Cog):
         # bot presence
         await self.client.change_presence(
             activity=discord.Activity(
-                type=discord.ActivityType.watching, name="ACUCyS CTF"
+                type=discord.ActivityType.playing, name="ACUCyS CTF"
             )
         )
 
@@ -53,14 +54,37 @@ class General(commands.Cog):
         logger.success("Bot is ready!")
     
     
+    @commands.Cog.listener()
+    async def on_app_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
+        if interaction.command:
+            logger.error(f"[{interaction.command.name}] {type(error).__name__}: {error}")
+        else:
+            logger.error(f"[Bot Error] {type(error).__name__}: {error}")
+
+        if isinstance(error, app_commands.CommandInvokeError):
+            # original = getattr(error, "original", error)
+            await interaction.followup.send("An unexpected internal error occurred while executing the command", ephemeral=True)
+
+        elif isinstance(error, app_commands.TransformerError):
+            await interaction.followup.send("Invalid argument or conversion error.", ephemeral=True)
+        
+        elif isinstance(error, app_commands.CheckFailure):
+            await interaction.followup.send("You don't have permission to use this command.", ephemeral=True)
+        
+        elif isinstance(error, app_commands.CommandOnCooldown):
+            await interaction.followup.send("This command is on cooldown, please try again later.", ephemeral=True)
+        
+        else:
+            if is_dev_mode():
+                await interaction.followup.send(f"An unknown error occurred.\n```{error}```", ephemeral=True)
+            else:
+                await interaction.followup.send(f"An unknown error occurred.", ephemeral=True)
+
 
     @app_commands.command(name="uptime", description="Displays how long the bot has been running.")
     async def uptime(self, interaction: discord.Interaction):
         if not self.start_time: # big oof
-            await interaction.response.send_message(
-                "Uptime tracking has not started yet. Please wait a moment.",
-                ephemeral=True
-            )
+            await interaction.response.send_message("Uptime tracking has not started yet. Please wait a moment.", ephemeral=True)
             return
 
         current_time = time()

@@ -51,17 +51,20 @@ class Config:
             
             ctfd_token = cls._get_env_var("CTFD_ACCESS_TOKEN")
             bot_token = cls._get_env_var("BOT_TOKEN")
+            bot_mode = cls._get_env_var("BOT_MODE")
 
             # TODO: maybe get rid of this part... maybe not?
             logger.success("Environment variables loaded successfully!")
+            logger.debug(f"Bot Mode: {bot_mode}")
+            logger.debug(f"Bot Token: {bot_token}")
             logger.debug(f"CTFd URL: {ctfd_url_normalized}")
             logger.debug(f"CTFd Token: {ctfd_token}")
-            logger.debug(f"Bot Token: {bot_token}")
 
             return {
+                "BOT_TOKEN": bot_token,
+                "BOT_MODE": bot_mode,
                 "CTFD_INSTANCE_URL": ctfd_url_normalized,
                 "CTFD_ACCESS_TOKEN": ctfd_token,
-                "BOT_TOKEN": bot_token,
             }
 
         except errors.ConfigError as e:
@@ -79,3 +82,9 @@ CONFIG = Config.load()
 ENV_CTFD_INSTANCE_URL = CONFIG["CTFD_INSTANCE_URL"]
 ENV_CTFD_ACCESS_TOKEN = CONFIG["CTFD_ACCESS_TOKEN"]
 ENV_BOT_TOKEN = CONFIG["BOT_TOKEN"]
+ENV_BOT_MODE = CONFIG["BOT_MODE"]
+
+# support functions
+def is_dev_mode():
+    global CONFIG
+    return (CONFIG["BOT_MODE"] == "dev") or (CONFIG["BOT_MODE"] == "development")
