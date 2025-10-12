@@ -1,5 +1,6 @@
 import datetime
 import discord
+import textwrap
 from discord import app_commands
 from discord.ext import commands
 from bot.utils.ctfd_api import CTFd_API
@@ -96,7 +97,7 @@ class CtfD(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
 
-    @app_commands.command(name="scoreboard", description="Show the current CTFd scoreboard.")
+    @app_commands.command(name="scoreboard", description="Show the current scoreboard.")
     async def scoreboard(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking=True)
 
@@ -114,6 +115,53 @@ class CtfD(commands.Cog):
             embed = view.get_list_embed()
 
             await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+
+        except Exception as e:
+            await interaction.followup.send(
+                f"An unexpected error occurred while fetching the scoreboard.\n```{e}```",
+                ephemeral=True
+            )
+    
+    @app_commands.command(name="challenges", description="Get the challenges list.")
+    async def challenges(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True)
+
+        try:
+            challenges = await CTFd_API.get_challenges()
+
+            if not challenges:
+                await interaction.followup.send("No challenges found.", ephemeral=True)
+                return
+
+            categories = {}
+            for ch in challenges:
+                cat = ch.get("category", "Uncategorized")
+                categories.setdefault(cat, []).append(ch)
+            
+            description = ""
+            for category, ch_list in categories.items():
+                description += f"**{category}**\n\n"
+                for ch in ch_list:
+                    name = ch.get("name", "Unknown")
+                    solves = ch.get("solves", 0)
+                    description += f"- {name} *({solves} solves)*\n"
+                description += "\n"
+
+            MAX_DESC_LEN = 4096
+            chunks = textwrap.wrap(description, MAX_DESC_LEN, replace_whitespace=False)
+
+            embeds = []
+            for i, chunk in enumerate(chunks, start=1):
+                embed = discord.Embed(
+                    title=":books: Challenges List" if i == 1 else f":books: Challenges List (Part {i})",
+                    description=chunk,
+                    color=discord.Color.teal(),
+                    timestamp=datetime.datetime.now(datetime.timezone.utc)
+                )
+                embeds.append(embed)
+            
+            for embed in embeds:
+                await interaction.followup.send(embed=embed, ephemeral=True)
 
         except Exception as e:
             await interaction.followup.send(
