@@ -52,8 +52,7 @@ class General(commands.Cog):
 
         logger.success("Bot is ready!")
     
-    async def setup_hook(self):
-        await self.client.tree.sync()
+    
 
     @app_commands.command(name="uptime", description="Displays how long the bot has been running.")
     async def uptime(self, interaction: discord.Interaction):
