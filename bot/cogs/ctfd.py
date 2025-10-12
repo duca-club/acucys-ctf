@@ -173,7 +173,7 @@ class CtfD(commands.Cog):
             embeds = []
             for i, chunk in enumerate(chunks, start=1):
                 embed = discord.Embed(
-                    title=":books: Challenges List" if i == 1 else f":books: Challenges List (Part {i})",
+                    title="🚩 Challenges List" if i == 1 else f":books: Challenges List (Part {i})",
                     description=chunk,
                     color=discord.Color.teal(),
                     timestamp=datetime.datetime.now(datetime.timezone.utc)
