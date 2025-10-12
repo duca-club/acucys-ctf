@@ -1,6 +1,7 @@
 # import os
 import aiohttp
 import asyncio
+import requests
 
 from bot.utils.environment import ENV_CTFD_INSTANCE_URL
 from bot.utils.environment import ENV_CTFD_ACCESS_TOKEN
@@ -22,6 +23,35 @@ class CTFd_API:
                         return data.get("data", [])
                     else:
                         raise RuntimeError(f"CTFd API returned HTTP {response.status}")
+            except asyncio.TimeoutError:
+                raise TimeoutError("CTFd API request timed out.")
+            except aiohttp.ClientError as e:
+                raise ConnectionError(f"CTFd API connection error: {e}")
+            except Exception as e:
+                raise RuntimeError(f"Unexpected error fetching scoreboard: {e}")
+            
+    @staticmethod
+    async def get_challenge_categories():
+        url = f"{ENV_CTFD_INSTANCE_URL}/challenges"
+        headers = {
+            "Authorization": f"Token {ENV_CTFD_ACCESS_TOKEN}",
+            "Content-Type": "application/json"
+        }
+
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(url, headers=headers, timeout=5) as response: # type: ignore
+                    if response.status == 200:
+                        data = await response.json()
+                        print(data)
+                        if data.get("success", False):
+                            all_items = data.get("data", [])
+                            categories = list({item.get("category") for item in all_items if item.get("category")})
+                            return categories
+                        else:
+                            raise RuntimeError("CTFd API returned an unsuccessfull response!")
+                    else:
+                        raise RuntimeError(f"CTFd API returned HTTP {response.status}.")
             except asyncio.TimeoutError:
                 raise TimeoutError("CTFd API request timed out.")
             except aiohttp.ClientError as e:

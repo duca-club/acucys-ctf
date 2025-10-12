@@ -4,6 +4,7 @@ import textwrap
 from discord import app_commands
 from discord.ext import commands
 from bot.utils.ctfd_api import CTFd_API
+from loguru import logger
 
 
 class ViewScoreboard(discord.ui.View):
@@ -96,6 +97,16 @@ class ViewScoreboard(discord.ui.View):
 class CtfD(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
+        self.challenges_options = []
+    
+    async def cog_load(self):
+        try:
+            self.challenges_options = await CTFd_API.get_challenge_categories()
+            self.challenges_options.append("All")
+            logger.success(f"Cached {len(self.challenges_options)} challenge categories at startup.")
+        except Exception as e:
+            logger.error(f"Failed to load challenge categories at startup: {e}")
+            self.challenges_options = []
 
     @app_commands.command(name="scoreboard", description="Show the current scoreboard.")
     async def scoreboard(self, interaction: discord.Interaction):
@@ -123,7 +134,8 @@ class CtfD(commands.Cog):
             )
     
     @app_commands.command(name="challenges", description="Get the challenges list.")
-    async def challenges(self, interaction: discord.Interaction):
+    @app_commands.describe(category="Filter challenges by category")
+    async def challenges(self, interaction: discord.Interaction, category: str):
         await interaction.response.defer(thinking=True)
 
         try:
@@ -131,7 +143,14 @@ class CtfD(commands.Cog):
 
             if not challenges:
                 await interaction.followup.send("No challenges found.", ephemeral=True)
-                return
+                
+            if category:
+                if not(category in self.challenges_options):
+                    await interaction.followup.send("Invalid catgeory entered!", ephemeral=True)
+                    return
+                
+                if not category == "All":
+                    challenges = [ch for ch in challenges if ch.get("category") == category]
 
             categories = {}
             for ch in challenges:
@@ -140,11 +159,12 @@ class CtfD(commands.Cog):
             
             description = ""
             for category, ch_list in categories.items():
-                description += f"**{category}**\n\n"
+                description += f"**{category}**\n"
                 for ch in ch_list:
                     name = ch.get("name", "Unknown")
                     solves = ch.get("solves", 0)
-                    description += f"- {name} *({solves} solves)*\n"
+                    points = ch.get("value", 0)
+                    description += f"- {name} *({points} points, {solves} solves)*\n"
                 description += "\n"
 
             MAX_DESC_LEN = 4096
@@ -169,6 +189,16 @@ class CtfD(commands.Cog):
                 ephemeral=True
             )
 
+    @challenges.autocomplete("category")
+    async def category_autocomplete(self, interaction: discord.Interaction, current: str):
+        if not self.challenges_options:
+            return []
+        filtered = [
+            app_commands.Choice(name=c, value=c)
+            for c in self.challenges_options
+            if current.lower() in c.lower()
+        ]
+        return filtered[:25]
 
 async def setup(client: commands.Bot):
     await client.add_cog(CtfD(client))
