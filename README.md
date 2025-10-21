@@ -8,18 +8,76 @@
   </p>
 </div>
 
-<br><br/>
-<br><br/>
+## 📂 Project Structure
 
-# Developer Notes
+```
+acucys-ctf/
+├── emojis/         # Discord application emojis
+│
+├── src/
+│   └── acusys_ctf/ # Project source root
+│       ├── cogs/   # Discord slash commands
+│       ├── utils/  # Utility/helper functions
+│       └── index.ts
+│
+├── .env            # Environment variables
+├── .env.exampple   # Example environment variables
+├── .gitattributes  # Git config
+├── .gitignore      # Git ignore
+├── CONTRIBUTING.md # Contributing guide
+├── poetry.lock     # Dependency lockfile
+├── pyproject.toml  # Project metadata & dependencies
+├── README.md
+```
 
-To get the API key for the CTFd Demo Instance, login at [/login](https://demo.ctfd.io/login) as either:
+## 🚀 Getting Started
 
-- Administrator
-  - Username: `admin`
-  - Password: `password`
-- User
-  - Username: `user`
-  - Password: `password`
+### Prerequisites
 
-Next, head to [/settings](https://demo.ctfd.io/settings) and create a new access token.
+- [Poetry 1.8.0 or higher](https://python-poetry.org/docs/#installation).
+- Python 3.12 or higher.
+- A running CTFd instance ([CTFd setup](https://docs.ctfd.io/docs/deployment/installation)). [^1].
+
+[^1]: Or use the [demo instance](https://demo.ctfd.io).
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/duca-club/acucys-ctf.git
+cd acucys-ctf
+```
+
+### 2. Install Dependencies
+
+```bash
+# Change `3.14` if you wish to use a different Python version
+poetry env use 3.14
+poetry install
+```
+
+### 3. Configure Environment
+
+Create a `.env` file using the provided `.env.example` template:
+
+```bash
+cp .env.example .env
+```
+
+Fill in required values:
+
+- `BOT_MODE=dev`
+- `BOT_TOKEN=<your discord bot token>`
+- `CTFD_ACCESS_TOKEN=<your CTFd admin token>`
+- `CTFD_INSTANCE_URL=<your ctfd instance base url>`
+
+### 4. Run Bot
+
+```bash
+poetry run acucys-ctf
+```
+
+This starts the discord bot in development mode.
+
+## 🤝 Contributing
+
+Please refer to the [contributing guide](CONTRIBUTING.md) for more details.
