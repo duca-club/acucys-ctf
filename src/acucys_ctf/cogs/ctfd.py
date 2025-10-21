@@ -54,22 +54,17 @@ class ViewScoreboard(discord.ui.View):
     def get_team_embed(self):
         """Embed showing a single team."""
         entry = self.scoreboard[self.current_index]
-        name = entry.get("name", "Unknown")
-        score = entry.get("score", 0)
-        rank = entry.get("pos", "?")
-        members = entry.get("members", [])
-
         embed = discord.Embed(
-            title=f"🚩 {rank}. Team *{name}*",
+            title=f"🚩 {entry["pos"]}. Team *{entry["name"]}*",
             color=discord.Color.gold(),
-            description=f"**Rank**: *{rank}*\n**Total Score**: *{score}*",
+            description=f"**Rank**: *{entry["pos"]}*\n**Total Score**: *{entry["score"]}*",
             timestamp=datetime.datetime.now(datetime.timezone.utc),
         )
 
-        if members:
+        if entry["members"]:
             member_lines = "\n".join(
                 f"• **{m.get('name', 'Unknown')}**: {m.get('score', 0)} pts"
-                for m in members
+                for m in entry["members"]
             )
             embed.add_field(name="Members", value=member_lines, inline=False)
         else:
