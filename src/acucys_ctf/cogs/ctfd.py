@@ -44,10 +44,9 @@ class ViewScoreboard(discord.ui.View):
         # Build a formatted description string
         description_lines: list[str] = []
         for entry in self.scoreboard:
-            name = entry.get("name", "Unknown")
-            score = entry.get("score", 0)
-            pos = entry.get("pos", 0)
-            description_lines.append(f"{pos}.**{name}**: *({score} points)*")
+            description_lines.append(
+                f"{entry["pos"]}.**{entry["name"]}**: *({entry["score"]} points)*"
+            )
 
         embed.description = "\n".join(description_lines)
         return embed
