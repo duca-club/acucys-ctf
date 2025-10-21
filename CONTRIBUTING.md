@@ -8,10 +8,10 @@ If you find a bug or have a feature request, please:
 
 1. Search existing issues to avoid duplicates.
 2. Open a new issue in the Issues tab with:
-    - A clear title (e.g., “feat(commands): support flag submission modal”).
-    - A concise description of the problem or desired behavior.
-    - Steps to reproduce (for bugs) or rationale (for features).
-    - Screenshots or logs, if applicable.
+   - A clear title (e.g., “feat(commands): support flag submission modal”).
+   - A concise description of the problem or desired behavior.
+   - Steps to reproduce (for bugs) or rationale (for features).
+   - Screenshots or logs, if applicable.
 
 ## 🌱 Branching Strategy
 
@@ -54,12 +54,12 @@ Instead, break it down into smaller, more focused commits using the above listed
 - PRs should **always** target the `dev` branch.
 - Make sure your branch is up to date with `dev` before opening a PR.
 - Fill out the PR template, including:
-    - Describe what your PR does (scope, deliverables, what changed, why).
-    - Related issue number (if applicable).
-    - Include screenshots (if applicable).
+  - Describe what your PR does (scope, deliverables, what changed, why).
+  - Related issue number (if applicable).
+  - Include screenshots (if applicable).
 - Address any feedback recieved:
-    - Make additional commits to your feature branch.
-    - Rebase or merge latest `dev` as needed.
+  - Make additional commits to your feature branch.
+  - Rebase or merge latest `dev` as needed.
 
 ## 🙌 Thank You!
 
