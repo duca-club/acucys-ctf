@@ -7,8 +7,8 @@ from acucys_ctf.utils.environment import BotMode, Config
 
 
 class ACUCySCTFBot(commands.Bot):
-    def __init__(self):
-        self.config = Config()
+    def __init__(self, config: Config):
+        self.config = config
 
         intents = discord.Intents.default()
         super().__init__(command_prefix=".", intents=intents)
