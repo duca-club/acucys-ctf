@@ -28,7 +28,7 @@ acucys-ctf/
 ├── CONTRIBUTING.md     # Contributing guide
 ├── poetry.lock         # Dependency lockfile
 ├── pyproject.toml      # Project metadata & dependencies
-├── README.md
+└── README.md
 ```
 
 ## 🚀 Getting Started
