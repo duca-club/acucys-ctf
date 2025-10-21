@@ -1,13 +1,15 @@
-from typing import Literal, TypedDict
+from dataclasses import dataclass
+from typing import Literal
 
-import typing_json.decoding
+import typedload
 from aiohttp import ClientSession, ClientTimeout
 
 from acucys_ctf.utils.environment import Config
 from acucys_ctf.utils.errors import CTFdError
 
 
-class Member(TypedDict):
+@dataclass
+class Member:
     bracket_id: int | None
     bracket_name: str | None
     id: int
@@ -16,7 +18,8 @@ class Member(TypedDict):
     score: int
 
 
-class Score(TypedDict):
+@dataclass
+class Score:
     pos: int
     account_id: int
     account_url: str
@@ -29,22 +32,18 @@ class Score(TypedDict):
     members: list[Member]
 
 
-# Need to use functional syntax here because a reserved keyword ("type") is a field
-Challenge = TypedDict(
-    "Challenge",
-    {
-        "id": int,
-        "type": Literal["multiple_choice", "standard", "code"],
-        "name": str,
-        "value": int,
-        "solves": int,
-        "solved_by_me": bool,
-        "category": str,
-        "tags": list[str],
-        "template": str,
-        "script": str,
-    },
-)
+@dataclass
+class Challenge:
+    id: int
+    type: Literal["multiple_choice", "standard", "code"]
+    name: str
+    value: int
+    solves: int
+    solved_by_me: bool
+    category: str
+    tags: list[str]
+    template: str
+    script: str
 
 
 class CTFd_API:
@@ -78,7 +77,7 @@ class CTFd_API:
         if "data" not in value:
             raise CTFdError("Unexpected response.")
 
-        return typing_json.decoding.from_json_obj(value["data"], ty)  # pyright: ignore[reportUnknownMemberType]
+        return typedload.load(value["data"], ty)
 
     async def get_scoreboard(self):
         return await self._get_data("scoreboard", list[Score])

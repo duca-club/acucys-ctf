@@ -45,7 +45,7 @@ class ViewScoreboard(discord.ui.View):
         description_lines: list[str] = []
         for entry in self.scoreboard:
             description_lines.append(
-                f"{entry["pos"]}.**{entry["name"]}**: *({entry["score"]} points)*"
+                f"{entry.pos}.**{entry.name}**: *({entry.score} points)*"
             )
 
         embed.description = "\n".join(description_lines)
@@ -55,16 +55,15 @@ class ViewScoreboard(discord.ui.View):
         """Embed showing a single team."""
         entry = self.scoreboard[self.current_index]
         embed = discord.Embed(
-            title=f"🚩 {entry["pos"]}. Team *{entry["name"]}*",
+            title=f"🚩 {entry.pos}. Team *{entry.name}*",
             color=discord.Color.gold(),
-            description=f"**Rank**: *{entry["pos"]}*\n**Total Score**: *{entry["score"]}*",
+            description=f"**Rank**: *{entry.pos}*\n**Total Score**: *{entry.score}*",
             timestamp=datetime.datetime.now(datetime.timezone.utc),
         )
 
-        if entry["members"]:
+        if entry.members:
             member_lines = "\n".join(
-                f"• **{m.get('name', 'Unknown')}**: {m.get('score', 0)} pts"
-                for m in entry["members"]
+                f"• **{member.name}**: {member.score} pts" for member in entry.members
             )
             embed.add_field(name="Members", value=member_lines, inline=False)
         else:
@@ -121,7 +120,7 @@ class CtfD(commands.Cog):
     async def cog_load(self):
         challenges = await self.ctfd_api.get_challenges()
         for challenge in challenges:
-            self.challenge_categories.add(challenge["category"])
+            self.challenge_categories.add(challenge.category)
 
         self.challenge_categories.add("All")
         logger.success(
@@ -141,7 +140,7 @@ class CtfD(commands.Cog):
             return
 
         # Sort by position (rank)
-        scoreboard = sorted(scoreboard, key=lambda x: x["pos"])[:10]
+        scoreboard = sorted(scoreboard, key=lambda x: x.pos)[:10]
 
         # Default = show full list view
         view = ViewScoreboard(scoreboard)
@@ -168,20 +167,19 @@ class CtfD(commands.Cog):
                 return
 
             if category != "All":
-                challenges = filter(lambda ch: ch["category"] == category, challenges)
+                challenges = filter(lambda ch: ch.category == category, challenges)
 
         categories: dict[str, list[Challenge]] = {}
         for ch in challenges:
-            categories.setdefault(ch["category"], []).append(ch)
+            categories.setdefault(ch.category, []).append(ch)
 
         description = ""
         for category, ch_list in categories.items():
             description += f"**{category}**\n"
             for ch in ch_list:
-                name = ch["name"]
-                solves = ch["solves"]
-                points = ch["value"]
-                description += f"- {name} *({points} points, {solves} solves)*\n"
+                description += (
+                    f"- {ch.name} *({ch.value} points, {ch.solves} solves)*\n"
+                )
             description += "\n"
 
         MAX_DESC_LEN = 4096
