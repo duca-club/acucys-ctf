@@ -37,20 +37,6 @@ class General(commands.Cog):
             )
         )
 
-        # todo: remove this after confirming further
-        # -----
-        # _tmp_filecheck = ".DO_NOT_DELETE.txt"
-        # if not os.path.isfile(_tmp_filecheck):
-        #     synced = await self.client.tree.sync()
-        #     logger.debug(f"Synced: {[(str(item.name)+'-'+str(item.id)) for item in synced]}")
-        #     logger.success(f"Synced {len(synced)} Slash Commands")
-        #     with open(_tmp_filecheck, "w", encoding="utf-8") as _file:
-        #         _file.write(
-        #             "Deleting this file and restarting the bot\n"
-        #             "will make the bot register its command tree\n"
-        #             "once again"
-        #         )
-
         logger.success("Bot is ready!")
 
     @app_commands.command(

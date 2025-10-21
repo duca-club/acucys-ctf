@@ -2,7 +2,10 @@
 name = "acucys-ctf"
 version = "0.1.0"
 description = "Official Discord bot for the ACUCyS CTF event"
-authors = [{ name = "PyPylia", email = "me@pypylia.dev" }]
+authors = [
+    { name = "PyPylia", email = "me@pypylia.dev" },
+    { name = "Hirusha Adikari", email = "hirushaadi@gmail.com" }
+]
 license = { text = "GPLv3" }
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
