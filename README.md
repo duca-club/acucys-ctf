@@ -12,21 +12,22 @@
 
 ```
 acucys-ctf/
-├── emojis/         # Discord application emojis
+├── emojis/             # Discord application emojis
 │
 ├── src/
-│   └── acusys_ctf/ # Project source root
-│       ├── cogs/   # Discord slash commands
-│       ├── utils/  # Utility/helper functions
-│       └── index.ts
+│   └── acusys_ctf/     # Project source root
+│       ├── cogs/       # Discord slash commands
+│       ├── utils/      # Utility/helper functions
+│       ├── __init__.py # Main bot code
+│       └── __main__.py # Bot entrypoint
 │
-├── .env            # Environment variables
-├── .env.exampple   # Example environment variables
-├── .gitattributes  # Git config
-├── .gitignore      # Git ignore
-├── CONTRIBUTING.md # Contributing guide
-├── poetry.lock     # Dependency lockfile
-├── pyproject.toml  # Project metadata & dependencies
+├── .env                # Environment variables
+├── .env.exampple       # Example environment variables
+├── .gitattributes      # Git config
+├── .gitignore          # Git ignore
+├── CONTRIBUTING.md     # Contributing guide
+├── poetry.lock         # Dependency lockfile
+├── pyproject.toml      # Project metadata & dependencies
 ├── README.md
 ```
 
