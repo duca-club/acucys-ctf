@@ -1,12 +1,13 @@
 import os
-from dataclasses import dataclass
+from dataclasses import MISSING, dataclass, field
 from enum import StrEnum
+from typing import Any, Self
 from urllib.parse import urlparse, urlunparse
 
 from acucys_ctf.utils.errors import ConfigError
 
 
-def get_env_var(name: str, *, required: bool = True) -> str:
+def get_env_var(name: str, *, required: bool = True) -> str | None:
     value = os.getenv(name)
 
     if required and value is None:
@@ -15,7 +16,7 @@ def get_env_var(name: str, *, required: bool = True) -> str:
     if value is not None:
         return value.strip()
 
-    return ""
+    return value
 
 
 def normalize_url(url: str) -> str:
@@ -32,22 +33,48 @@ class BotMode(StrEnum):
     DEVELOPMENT = "dev"
     PRODUCTION = "prod"
 
+    @classmethod
+    def parse(cls: type[Self], value: str) -> Self:
+        try:
+            return cls(value.lower())
+        except ValueError:
+            raise ConfigError("Expected bot mode, got " + value)
 
-@dataclass
+
+def parse_positive_int(value: str) -> int:
+    try:
+        num = int(value)
+    except ValueError:
+        raise ConfigError("Expected positive integer, got " + value)
+
+    if num < 0:
+        raise ConfigError("Expected positive integer, got " + value)
+
+    return num
+
+
+@dataclass(frozen=True)
 class Config:
-    ctfd_instance_url: str
+    ctfd_instance_url: str = field(metadata={"parser": normalize_url})
     ctfd_access_token: str
+    discord_id_field: int
     bot_token: str
-    bot_mode: BotMode = BotMode.DEVELOPMENT
+    cache_timeout: int = field(default=60, metadata={"parser": parse_positive_int})
+    bot_mode: BotMode = field(
+        default=BotMode.DEVELOPMENT, metadata={"parser": BotMode.parse}
+    )
 
     def __init__(self):
-        bot_mode = get_env_var("BOT_MODE", required=False).lower()
-        if bot_mode != "":
-            try:
-                self.bot_mode = BotMode(bot_mode)
-            except ValueError:
-                raise ConfigError(f"Invalid bot mode: {bot_mode}")
+        for cur_field in self.__dataclass_fields__.values():
+            field_value = get_env_var(
+                cur_field.name.upper(), required=cur_field.default is MISSING
+            )
+            if field_value is not None:
 
-        self.bot_token = get_env_var("BOT_TOKEN")
-        self.ctfd_access_token = get_env_var("CTFD_ACCESS_TOKEN")
-        self.ctfd_instance_url = normalize_url(get_env_var("CTFD_INSTANCE_URL"))
+                def parser(val: str) -> Any:
+                    return cur_field.type(val)
+
+                if "parser" in cur_field.metadata:
+                    parser = cur_field.metadata["parser"]
+
+                object.__setattr__(self, cur_field.name, parser(field_value))

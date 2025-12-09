@@ -1,6 +1,8 @@
 import datetime
+import random
+import re
+import string
 import textwrap
-import typing
 
 import discord
 from discord import app_commands
@@ -8,106 +10,10 @@ from discord.ext import commands
 from loguru import logger
 
 from acucys_ctf import ACUCySCTFBot
-from acucys_ctf.utils.ctfd_api import Challenge, CTFd_API, Score
+from acucys_ctf.utils.ctfd_api import Challenge, CTFd_API, Member, Score
+from acucys_ctf.views.scoreboard import Scoreboard, get_team_embed
 
-
-class ViewScoreboard(discord.ui.View):
-    scoreboard: list[Score]
-    current_index: int
-    showing_list: bool
-
-    def __init__(self, scoreboard: list[Score], current_index: int = 0):
-        super().__init__(timeout=180)
-        self.scoreboard = scoreboard
-        self.current_index = current_index
-        self.showing_list = True
-        self.update_buttons()
-
-    def update_buttons(self):
-        """Enable/disable navigation depending on mode and index."""
-        self.left.disabled = self.showing_list or self.current_index <= 0
-        self.right.disabled = (
-            self.showing_list or self.current_index >= len(self.scoreboard) - 1
-        )
-        self.list.label = (
-            "📋 View Team Details" if self.showing_list else "📋 Back to Team List"
-        )
-
-    def get_list_embed(self):
-        """Embed showing all teams in the description."""
-        embed = discord.Embed(
-            title=":trophy: Scoreboard: All Teams",
-            color=discord.Color.blue(),
-            timestamp=datetime.datetime.now(datetime.timezone.utc),
-        )
-
-        # Build a formatted description string
-        description_lines: list[str] = []
-        for entry in self.scoreboard:
-            description_lines.append(
-                f"{entry.pos}.**{entry.name}**: *({entry.score} points)*"
-            )
-
-        embed.description = "\n".join(description_lines)
-        return embed
-
-    def get_team_embed(self):
-        """Embed showing a single team."""
-        entry = self.scoreboard[self.current_index]
-        embed = discord.Embed(
-            title=f"🚩 {entry.pos}. Team *{entry.name}*",
-            color=discord.Color.gold(),
-            description=f"**Rank**: *{entry.pos}*\n**Total Score**: *{entry.score}*",
-            timestamp=datetime.datetime.now(datetime.timezone.utc),
-        )
-
-        if entry.members:
-            member_lines = "\n".join(
-                f"• **{member.name}**: {member.score} pts" for member in entry.members
-            )
-            embed.add_field(name="Members", value=member_lines, inline=False)
-        else:
-            embed.add_field(name="Members", value="No members found.", inline=False)
-
-        embed.set_footer(
-            text=f"Team {self.current_index + 1} of {len(self.scoreboard)}"
-        )
-        return embed
-
-    # ⬅️
-    @discord.ui.button(emoji="⬅️", style=discord.ButtonStyle.secondary)
-    async def left(
-        self, interaction: discord.Interaction, _button: discord.ui.Button[typing.Self]
-    ):
-        if not self.showing_list and self.current_index > 0:
-            self.current_index -= 1
-            self.update_buttons()
-            await interaction.response.edit_message(
-                embed=self.get_team_embed(), view=self
-            )
-
-    # 📋
-    @discord.ui.button(label="📋 View Team Details", style=discord.ButtonStyle.primary)
-    async def list(
-        self, interaction: discord.Interaction, _button: discord.ui.Button[typing.Self]
-    ):
-        """Toggle between list and single team view."""
-        self.showing_list = not self.showing_list
-        self.update_buttons()
-        embed = self.get_list_embed() if self.showing_list else self.get_team_embed()
-        await interaction.response.edit_message(embed=embed, view=self)
-
-    # ➡️
-    @discord.ui.button(emoji="➡️", style=discord.ButtonStyle.secondary)
-    async def right(
-        self, interaction: discord.Interaction, _button: discord.ui.Button[typing.Self]
-    ):
-        if not self.showing_list and self.current_index < len(self.scoreboard) - 1:
-            self.current_index += 1
-            self.update_buttons()
-            await interaction.response.edit_message(
-                embed=self.get_team_embed(), view=self
-            )
+EMAIL_REGEX = r"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"
 
 
 class CtfD(commands.Cog):
@@ -143,7 +49,7 @@ class CtfD(commands.Cog):
         scoreboard = sorted(scoreboard, key=lambda x: x.pos)[:10]
 
         # Default = show full list view
-        view = ViewScoreboard(scoreboard)
+        view = Scoreboard(scoreboard)
         embed = view.get_list_embed()
 
         await interaction.followup.send(embed=embed, view=view, ephemeral=True)
@@ -210,6 +116,181 @@ class CtfD(commands.Cog):
             if current.lower() in challenge.lower()
         ]
         return filtered[:25]
+
+    @app_commands.command(
+        name="team", description="Get information about a specific team."
+    )
+    @app_commands.describe(
+        team="The team name to check. Leave blank for your own team."
+    )
+    async def team(self, interaction: discord.Interaction, team: str | None):
+        await interaction.response.defer(thinking=True)
+
+        team_id: int
+        if team is None:
+            user = await self.ctfd_api.get_user_from_discord(interaction.user.id)
+            if user is None:
+                await interaction.followup.send(
+                    "You do not have an account.", ephemeral=True
+                )
+                return
+
+            if user.team_id is None:
+                await interaction.followup.send(
+                    "You are not in a team.", ephemeral=True
+                )
+                return
+
+            team_id = user.team_id
+        else:
+            teams = await self.ctfd_api.get_teams(invalidate_cache=True)
+            try:
+                team_id = next(filter(lambda t: t.name == team, teams)).id
+            except StopIteration:
+                await interaction.followup.send(
+                    f"There is no team with the name `{team}`.", ephemeral=True
+                )
+                return
+
+        full_team = await self.ctfd_api.get_full_team(team_id)
+        members: list[Member] = []
+        for member_id in full_team.members:
+            full_user = await self.ctfd_api.get_user(member_id)
+            members.append(
+                Member(
+                    bracket_id=full_user.bracket_id,
+                    bracket_name=None,
+                    id=member_id,
+                    name=full_user.name,
+                    oauth_id=full_user.oauth_id,
+                    score=full_user.score,
+                )
+            )
+
+        await interaction.followup.send(
+            ephemeral=True,
+            embed=get_team_embed(
+                Score(
+                    pos=int(re.sub("[^0-9]", "", full_team.place)),
+                    account_id=full_team.id,
+                    account_url=f"teams/{full_team.id}",
+                    account_type="team",
+                    oauth_id=full_team.oauth_id,
+                    name=full_team.name,
+                    score=full_team.score,
+                    bracket_id=full_team.bracket_id,
+                    bracket_name=None,
+                    members=members,
+                )
+            ),
+        )
+
+    @team.autocomplete("team")
+    async def team_autocomplete(self, _interaction: discord.Interaction, current: str):
+        filtered = [
+            app_commands.Choice(name=team.name, value=team.name)
+            for team in await self.ctfd_api.get_teams()
+            if current.lower() in team.name.lower()
+        ]
+        return filtered[:25]
+
+    @app_commands.command(name="register", description="Register for the CTF.")
+    async def register_user(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True)
+
+        user = await self.ctfd_api.get_user_from_discord(interaction.user.id)
+        if user is not None:
+            await interaction.followup.send(
+                "You already have an account.", ephemeral=True
+            )
+            return
+
+        await interaction.followup.send(
+            "Check your DMs to continue the account creation process.", ephemeral=True
+        )
+
+        channel = await interaction.user.create_dm()
+
+        def message_check(msg: discord.Message) -> bool:
+            return msg.channel.id == channel.id and msg.author.id == interaction.user.id
+
+        await channel.send(
+            embed=discord.Embed(
+                title="ACUCyS CTF Account Creation",
+                color=discord.Color.teal(),
+                timestamp=datetime.datetime.now(datetime.timezone.utc),
+                description="""
+                Welcome to the ACUCyS CTF Account Creation.
+                To continue, please enter your preferred email address, you will have to verify this later.
+                """,
+            )
+        )
+
+        email: str = ""
+        for i in range(5):
+            msg = await self.client.wait_for("message", check=message_check)
+            if re.search(EMAIL_REGEX, msg.content) is not None:
+                email = msg.content
+                break
+
+            if i == 4:
+                await channel.send(
+                    embed=discord.Embed(
+                        title="ACUCyS CTF Account Creation",
+                        color=discord.Color.red(),
+                        timestamp=datetime.datetime.now(datetime.timezone.utc),
+                        description="""
+                    You entered an invalid email address too many times.
+                    Please try again later.
+                    """,
+                    )
+                )
+                return
+
+            await channel.send(
+                embed=discord.Embed(
+                    title="ACUCyS CTF Account Creation",
+                    color=discord.Color.red(),
+                    timestamp=datetime.datetime.now(datetime.timezone.utc),
+                    description="""
+                    You entered an invalid email address.
+                    Please try again.
+                    """,
+                )
+            )
+
+        await channel.send(
+            embed=discord.Embed(
+                title="ACUCyS CTF Account Creation",
+                color=discord.Color.teal(),
+                timestamp=datetime.datetime.now(datetime.timezone.utc),
+                description="""
+                Thank you. Please enter your preferred username.
+                """,
+            )
+        )
+
+        msg = await self.client.wait_for("message", check=message_check)
+
+        # Doesn't have to be cryptographically secure. Is only a temporary password used until they login.
+        password = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
+        user = await self.ctfd_api.register_user(
+            msg.content, email, password, interaction.user.id
+        )
+
+        await channel.send(
+            embed=discord.Embed(
+                title="ACUCyS CTF Account Creation",
+                color=discord.Color.green(),
+                timestamp=datetime.datetime.now(datetime.timezone.utc),
+                description=f"""
+                Thank you. Your account has been created successfully!
+                Your temporary password is `{password}`, and you will be prompted to change it upon login.
+                You can change other information such as your website, and join a team once logged in.
+                You can login at `{self.client.config.ctfd_instance_url}/login`.
+                """,
+            )
+        )
 
 
 async def setup(client: ACUCySCTFBot):
