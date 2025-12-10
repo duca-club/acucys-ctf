@@ -60,6 +60,15 @@ class General(commands.Cog):
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.command(
+        name="feedback", description="Provide feedback for the bot or CTF."
+    )
+    async def feedback(self, interaction: discord.Interaction):
+        await interaction.response.send_message(
+            f"Here is the CTF and bot feedback link: {self.client.config.feedback_url}",
+            ephemeral=True,
+        )
+
+    @app_commands.command(
         name="help", description="Lists all commands and their usage."
     )
     async def help(self, interaction: discord.Interaction):

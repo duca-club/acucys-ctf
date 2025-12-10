@@ -60,6 +60,7 @@ class Config:
     webhook_url: str
     discord_id_field: int
     bot_token: str
+    feedback_url: str
     webhook_frequency: int = field(default=10, metadata={"parser": parse_positive_int})
     api_timeout: int = field(default=5, metadata={"parser": parse_positive_int})
     cache_timeout: int = field(default=60, metadata={"parser": parse_positive_int})
