@@ -61,11 +61,16 @@ class CtfD(commands.Cog):
     @app_commands.command(name="challenges", description="Get the challenges list.")
     @app_commands.describe(category="Filter challenges by category")
     async def challenges(self, interaction: discord.Interaction, category: str | None):
-        await interaction.response.defer(thinking=True, ephemeral=True)
+        if category == "All":
+            category = None
 
         if category is not None and category not in self.challenge_categories:
-            await interaction.followup.send("Invalid category entered!", ephemeral=True)
+            await interaction.response.send_message(
+                "Invalid category entered!", ephemeral=True
+            )
             return
+
+        await interaction.response.defer(thinking=True, ephemeral=True)
 
         challenges = await self.ctfd_api.get_challenges()
 
@@ -73,7 +78,7 @@ class CtfD(commands.Cog):
             await interaction.followup.send("No challenges found.", ephemeral=True)
             return
 
-        if category is not None and category != "All":
+        if category is not None:
             challenges = filter(lambda ch: ch.category == category, challenges)
 
         categories: dict[str, list[Challenge]] = {}
@@ -111,6 +116,15 @@ class CtfD(commands.Cog):
     )
     @app_commands.describe(category="Filter solves by challenge category")
     async def progress(self, interaction: discord.Interaction, category: str | None):
+        if category == "All":
+            category = None
+
+        if category is not None and category not in self.challenge_categories:
+            await interaction.response.send_message(
+                "Invalid category entered!", ephemeral=True
+            )
+            return
+
         await interaction.response.defer(thinking=True, ephemeral=True)
 
         user = await self.ctfd_api.get_user_from_discord(interaction.user.id)
@@ -140,7 +154,7 @@ class CtfD(commands.Cog):
                 solve.user.name
             )
 
-        if category is not None and category != "All":
+        if category is not None:
             challenges = categories[category]
             total = len(challenges)
             solves_num = sum(
