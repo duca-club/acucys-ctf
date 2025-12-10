@@ -11,7 +11,7 @@ class ACUCySCTFBot(commands.Bot):
         self.config = config
 
         intents = discord.Intents.default()
-        super().__init__(command_prefix=".", intents=intents)
+        super().__init__(command_prefix=".", intents=intents, help_command=None)
 
     async def setup_hook(self):
         self.tree.on_error = self.on_app_command_error

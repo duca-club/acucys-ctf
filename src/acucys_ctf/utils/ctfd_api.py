@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal
@@ -120,6 +121,54 @@ class FullTeam(Team):
     score: int
 
 
+@dataclass
+class SolveStatistics:
+    id: int
+    name: str
+    solves: int
+
+
+@dataclass
+class ChallengeSolve:
+    account_id: int
+    name: str
+    date: str  # javascript Date
+    account_url: str
+
+
+@dataclass
+class TeamSolveUser:
+    name: str
+    id: int
+
+
+@dataclass
+class TeamSolveChallenge:
+    name: str
+    category: str
+    id: int
+    value: int
+
+
+@dataclass
+class TeamSolveTeam:
+    name: str
+    id: int
+
+
+@dataclass
+class TeamSolve:
+    user: TeamSolveUser
+    ip: str
+    challenge: TeamSolveChallenge
+    team: TeamSolveTeam
+    date: str  # javascript Date
+    provided: str
+    id: int
+    challenge_id: int
+    type: str
+
+
 # typedload cannot deal with generics since all types must be fully qualified at runtime,
 # so this is a workaround to allow for generics while having fully qualified types at runtime.
 
@@ -158,6 +207,9 @@ UsersRequest = create_request_type(list[User])
 FullUserRequest = create_request_type(FullUser)
 TeamsRequest = create_request_type(list[Team])
 FullTeamRequest = create_request_type(FullTeam)
+SolveStatisticsRequest = create_request_type(list[SolveStatistics])
+ChallengeSolvesRequest = create_request_type(list[ChallengeSolve])
+TeamSolvesRequest = create_request_type(list[TeamSolve])
 
 
 class CTFd_API:
@@ -169,17 +221,20 @@ class CTFd_API:
     teams_cache_time: datetime.datetime = datetime.datetime(1970, 1, 1)
     teams_cache: list[Team] = []
     user_count = 0
+    challenge_solves: dict[int, set[int]] = {}
 
     def __init__(self, config: Config):
         self.config = config
         self.session = ClientSession(
             f"{config.ctfd_instance_url}/api/v1/",
-            timeout=ClientTimeout(total=5),
+            timeout=ClientTimeout(total=config.api_timeout),
             headers={
                 "Authorization": f"Token {config.ctfd_access_token}",
                 "Content-Type": "application/json",
             },
         )
+
+        asyncio.create_task(self._webhook_task())
 
     async def close(self):
         await self.session.close()
@@ -254,6 +309,13 @@ class CTFd_API:
             await self._parse_request("GET", f"teams/{team_id}", FullTeamRequest)
         ).data
 
+    async def get_team_solves(self, team_id: int) -> list[TeamSolve]:
+        return (
+            await self._parse_request(
+                "GET", f"teams/{team_id}/solves", TeamSolvesRequest
+            )
+        ).data
+
     async def get_teams(self, *, invalidate_cache: bool = False) -> list[Team]:
         if (
             datetime.datetime.now() - self.teams_cache_time
@@ -303,3 +365,59 @@ class CTFd_API:
 
         self.discord_id_cache[discord_id] = user.data.id
         return user.data
+
+    async def _webhook_task(self):
+        new_solves: set[tuple[Any, str]] = set()
+        is_init = len(self.challenge_solves) == 0
+        total_solves = await self._parse_request(
+            "GET", "statistics/challenges/solves", SolveStatisticsRequest
+        )
+
+        for challenge in total_solves.data:
+            stored_solves = self.challenge_solves.setdefault(challenge.id, set())
+            if len(stored_solves) == challenge.solves:
+                continue
+
+            solves = await self._parse_request(
+                "GET", f"challenges/{challenge.id}/solves", ChallengeSolvesRequest
+            )
+            for solve in solves.data:
+                if solve.account_id in stored_solves:
+                    continue
+
+                stored_solves.add(solve.account_id)
+                if is_init:
+                    continue
+
+                team_solves = await self.get_team_solves(solve.account_id)
+                solve = next(
+                    filter(
+                        lambda solve: solve.challenge_id == challenge.id, team_solves
+                    )
+                )
+
+                user = await self.get_user(solve.user.id)
+                discord_id = user.get_field(self.config.discord_id_field)
+                if discord_id is None:
+                    continue
+
+                new_solves.add((discord_id.value, challenge.name))
+
+        if len(new_solves) != 0:
+            async with ClientSession(
+                timeout=ClientTimeout(total=self.config.api_timeout)
+            ) as session:
+                await session.post(
+                    self.config.webhook_url,
+                    json={
+                        "content": "\n".join(
+                            [
+                                f"<@{solve[0]}> just solved {solve[1]}!"
+                                for solve in new_solves
+                            ]
+                        )
+                    },
+                )
+
+        await asyncio.sleep(self.config.webhook_frequency)
+        asyncio.create_task(self._webhook_task())

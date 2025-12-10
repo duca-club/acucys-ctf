@@ -14,10 +14,12 @@ from acucys_ctf.utils.ctfd_api import Challenge, CTFd_API, Member, Score
 from acucys_ctf.views.scoreboard import Scoreboard, get_team_embed
 
 EMAIL_REGEX = r"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"
+MAX_DESC_LEN = 4096
 
 
 class CtfD(commands.Cog):
-    challenge_categories: set[str] = set()
+    challenge_categories: dict[str, dict[int, tuple[str, int]]] = {}
+    total_challenges: int = 0
 
     def __init__(self, client: ACUCySCTFBot):
         self.client = client
@@ -26,9 +28,11 @@ class CtfD(commands.Cog):
     async def cog_load(self):
         challenges = await self.ctfd_api.get_challenges()
         for challenge in challenges:
-            self.challenge_categories.add(challenge.category)
+            self.total_challenges += 1
+            self.challenge_categories.setdefault(challenge.category, {})[
+                challenge.id
+            ] = (challenge.name, challenge.value)
 
-        self.challenge_categories.add("All")
         logger.success(
             f"Cached {len(self.challenge_categories)} challenge categories at startup."
         )
@@ -38,7 +42,7 @@ class CtfD(commands.Cog):
 
     @app_commands.command(name="scoreboard", description="Show the current scoreboard.")
     async def scoreboard(self, interaction: discord.Interaction):
-        await interaction.response.defer(thinking=True)
+        await interaction.response.defer(thinking=True, ephemeral=True)
 
         scoreboard = await self.ctfd_api.get_scoreboard()
         if not scoreboard:
@@ -57,23 +61,20 @@ class CtfD(commands.Cog):
     @app_commands.command(name="challenges", description="Get the challenges list.")
     @app_commands.describe(category="Filter challenges by category")
     async def challenges(self, interaction: discord.Interaction, category: str | None):
-        await interaction.response.defer(thinking=True)
+        await interaction.response.defer(thinking=True, ephemeral=True)
+
+        if category is not None and category not in self.challenge_categories:
+            await interaction.followup.send("Invalid category entered!", ephemeral=True)
+            return
 
         challenges = await self.ctfd_api.get_challenges()
 
-        if not challenges:
+        if len(challenges) == 0:
             await interaction.followup.send("No challenges found.", ephemeral=True)
             return
 
-        if category:
-            if category not in self.challenge_categories:
-                await interaction.followup.send(
-                    "Invalid category entered!", ephemeral=True
-                )
-                return
-
-            if category != "All":
-                challenges = filter(lambda ch: ch.category == category, challenges)
+        if category is not None and category != "All":
+            challenges = filter(lambda ch: ch.category == category, challenges)
 
         categories: dict[str, list[Challenge]] = {}
         for ch in challenges:
@@ -88,15 +89,83 @@ class CtfD(commands.Cog):
                 )
             description += "\n"
 
-        MAX_DESC_LEN = 4096
         chunks = textwrap.wrap(description, MAX_DESC_LEN, replace_whitespace=False)
 
         embeds: list[discord.Embed] = []
         for i, chunk in enumerate(chunks, start=1):
             embed = discord.Embed(
-                title="🚩 Challenges List"
+                title="🚩 Challenge List"
                 if i == 1
-                else f":books: Challenges List (Part {i})",
+                else f":books: Challenge List (Part {i})",
+                description=chunk,
+                color=discord.Color.teal(),
+                timestamp=datetime.datetime.now(datetime.timezone.utc),
+            )
+            embeds.append(embed)
+
+        for embed in embeds:
+            await interaction.followup.send(embed=embed, ephemeral=True)
+
+    @app_commands.command(
+        name="progress", description="Get the solve progress of your team."
+    )
+    @app_commands.describe(category="Filter solves by challenge category")
+    async def progress(self, interaction: discord.Interaction, category: str | None):
+        await interaction.response.defer(thinking=True, ephemeral=True)
+
+        user = await self.ctfd_api.get_user_from_discord(interaction.user.id)
+        if user is None:
+            await interaction.followup.send(
+                "You do not have an account.", ephemeral=True
+            )
+            return
+
+        if user.team_id is None:
+            await interaction.followup.send("You are not in a team.", ephemeral=True)
+            return
+
+        total = self.total_challenges
+        categories: dict[str, dict[int, list[str | int | None]]] = {
+            category: {
+                challenge_id: [challenge[0], challenge[1], None]
+                for challenge_id, challenge in challenges.items()
+            }
+            for category, challenges in self.challenge_categories.items()
+        }
+
+        solves = await self.ctfd_api.get_team_solves(user.team_id)
+        solves_num = len(solves)
+        for solve in solves:
+            categories[solve.challenge.category][solve.challenge_id][2] = (
+                solve.user.name
+            )
+
+        if category is not None and category != "All":
+            challenges = categories[category]
+            total = len(challenges)
+            solves_num = sum(
+                1
+                for _ in filter(
+                    lambda solve: solve.challenge.category == category, solves
+                )
+            )
+            categories = {category: challenges}
+
+        description = f"**Progress:** {solves_num}/{total}\n"
+        for category, challenges in categories.items():
+            description += f"**{category}**\n"
+            for challenge in challenges.values():
+                description += f"- {challenge[0]} *({challenge[1]} points)* {'is unsolved.' if challenge[2] is None else f'was solved by {challenge[2]}'}\n"
+            description += "\n"
+
+        chunks = textwrap.wrap(description, MAX_DESC_LEN, replace_whitespace=False)
+
+        embeds: list[discord.Embed] = []
+        for i, chunk in enumerate(chunks, start=1):
+            embed = discord.Embed(
+                title="🚩 Team Progress"
+                if i == 1
+                else f":books: Team Progress (Part {i})",
                 description=chunk,
                 color=discord.Color.teal(),
                 timestamp=datetime.datetime.now(datetime.timezone.utc),
@@ -107,14 +176,19 @@ class CtfD(commands.Cog):
             await interaction.followup.send(embed=embed, ephemeral=True)
 
     @challenges.autocomplete("category")
+    @progress.autocomplete("category")
     async def category_autocomplete(
         self, _interaction: discord.Interaction, current: str
     ):
         filtered = [
-            app_commands.Choice(name=challenge, value=challenge)
-            for challenge in self.challenge_categories
-            if current.lower() in challenge.lower()
+            app_commands.Choice(name=category, value=category)
+            for category in self.challenge_categories
+            if current.lower() in category.lower()
         ]
+
+        if current.lower() in "all":
+            filtered.append(app_commands.Choice(name="All", value="All"))
+
         return filtered[:25]
 
     @app_commands.command(
@@ -124,7 +198,7 @@ class CtfD(commands.Cog):
         team="The team name to check. Leave blank for your own team."
     )
     async def team(self, interaction: discord.Interaction, team: str | None):
-        await interaction.response.defer(thinking=True)
+        await interaction.response.defer(thinking=True, ephemeral=True)
 
         team_id: int
         if team is None:
@@ -196,7 +270,7 @@ class CtfD(commands.Cog):
 
     @app_commands.command(name="register", description="Register for the CTF.")
     async def register_user(self, interaction: discord.Interaction):
-        await interaction.response.defer(thinking=True)
+        await interaction.response.defer(thinking=True, ephemeral=True)
 
         user = await self.ctfd_api.get_user_from_discord(interaction.user.id)
         if user is not None:
@@ -220,15 +294,23 @@ class CtfD(commands.Cog):
                 color=discord.Color.teal(),
                 timestamp=datetime.datetime.now(datetime.timezone.utc),
                 description="""
-                Welcome to the ACUCyS CTF Account Creation.
-                To continue, please enter your preferred email address, you will have to verify this later.
-                """,
+Welcome to the ACUCyS CTF Account Creation.
+To continue, please enter your preferred email address, you will have to verify this later.
+""",
             )
         )
 
         email: str = ""
         for i in range(5):
-            msg = await self.client.wait_for("message", check=message_check)
+            try:
+                msg = await self.client.wait_for(
+                    "message",
+                    check=message_check,
+                    timeout=self.client.config.register_timeout,
+                )
+            except TimeoutError:
+                return await self.register_timeout(channel)
+
             if re.search(EMAIL_REGEX, msg.content) is not None:
                 email = msg.content
                 break
@@ -240,9 +322,9 @@ class CtfD(commands.Cog):
                         color=discord.Color.red(),
                         timestamp=datetime.datetime.now(datetime.timezone.utc),
                         description="""
-                    You entered an invalid email address too many times.
-                    Please try again later.
-                    """,
+You entered an invalid email address too many times.
+Please try again later.
+""",
                     )
                 )
                 return
@@ -253,9 +335,9 @@ class CtfD(commands.Cog):
                     color=discord.Color.red(),
                     timestamp=datetime.datetime.now(datetime.timezone.utc),
                     description="""
-                    You entered an invalid email address.
-                    Please try again.
-                    """,
+You entered an invalid email address.
+Please try again.
+""",
                 )
             )
 
@@ -265,12 +347,19 @@ class CtfD(commands.Cog):
                 color=discord.Color.teal(),
                 timestamp=datetime.datetime.now(datetime.timezone.utc),
                 description="""
-                Thank you. Please enter your preferred username.
-                """,
+Thank you. Please enter your preferred username.
+""",
             )
         )
 
-        msg = await self.client.wait_for("message", check=message_check)
+        try:
+            msg = await self.client.wait_for(
+                "message",
+                check=message_check,
+                timeout=self.client.config.register_timeout,
+            )
+        except TimeoutError:
+            return await self.register_timeout(channel)
 
         # Doesn't have to be cryptographically secure. Is only a temporary password used until they login.
         password = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
@@ -284,11 +373,23 @@ class CtfD(commands.Cog):
                 color=discord.Color.green(),
                 timestamp=datetime.datetime.now(datetime.timezone.utc),
                 description=f"""
-                Thank you. Your account has been created successfully!
-                Your temporary password is `{password}`, and you will be prompted to change it upon login.
-                You can change other information such as your website, and join a team once logged in.
-                You can login at `{self.client.config.ctfd_instance_url}/login`.
-                """,
+Thank you. Your account has been created successfully!
+Your temporary password is `{password}`, and you will be prompted to change it upon login.
+You can change other information such as your website, and join a team once logged in.
+You can login at `{self.client.config.ctfd_instance_url}/login`.
+""",
+            )
+        )
+
+    async def register_timeout(self, channel: discord.DMChannel):
+        await channel.send(
+            embed=discord.Embed(
+                title="ACUCyS CTF Account Creation",
+                color=discord.Color.orange(),
+                timestamp=datetime.datetime.now(datetime.timezone.utc),
+                description="""
+Account creation timed out.
+""",
             )
         )
 

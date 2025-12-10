@@ -57,9 +57,13 @@ def parse_positive_int(value: str) -> int:
 class Config:
     ctfd_instance_url: str = field(metadata={"parser": normalize_url})
     ctfd_access_token: str
+    webhook_url: str
     discord_id_field: int
     bot_token: str
+    webhook_frequency: int = field(default=10, metadata={"parser": parse_positive_int})
+    api_timeout: int = field(default=5, metadata={"parser": parse_positive_int})
     cache_timeout: int = field(default=60, metadata={"parser": parse_positive_int})
+    register_timeout: int = field(default=60, metadata={"parser": parse_positive_int})
     bot_mode: BotMode = field(
         default=BotMode.DEVELOPMENT, metadata={"parser": BotMode.parse}
     )
