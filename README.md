@@ -8,41 +8,38 @@
   </p>
 </div>
 
-![NodeJS](https://img.shields.io/badge/NodeJS-v22%2B-%235FA04E?style=for-the-badge&logo=nodedotjs&logoColor=white&logoSize=auto)
-![Prettier](https://img.shields.io/badge/Prettier-%23F7B93E?style=for-the-badge&logo=prettier&logoColor=black&logoSize=auto)
-
 ## 📂 Project Structure
 
 ```
 acucys-ctf/
-├── .husky/         # Git pre-commit hooks
-│
-├── emojis/         # Discord application emojis
+├── emojis/             # Discord application emojis
 │
 ├── src/
-│   ├── commands/   # Discord slash commands
-│   ├── events/     # Discord event handlers
-│   ├── utils/      # Utility/helper functions
-│   └── index.ts
+│   └── acusys_ctf/     # Project source root
+│       ├── cogs/       # Discord slash commands
+│       ├── utils/      # Utility/helper functions
+│       ├── __init__.py # Main bot code
+│       └── __main__.py # Bot entrypoint
 │
-├── .env            # Environment variables
-├── .env.exampple   # Example environment variables
-├── .gitattributes  # Git config
-├── .gitignore      # Git ignore
-├── .prettierrc     # Prettier config
-├── CONTRIBUTING.md
-├── package-lock.json
-├── package.json    # Project metadata & dependencies
-├── README.md
-└── tsconfig.json   # TypeScript configuration
+├── .env                # Environment variables
+├── .env.exampple       # Example environment variables
+├── .gitattributes      # Git config
+├── .gitignore          # Git ignore
+├── CONTRIBUTING.md     # Contributing guide
+├── poetry.lock         # Dependency lockfile
+├── pyproject.toml      # Project metadata & dependencies
+└── README.md
 ```
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js v22 or higher
-- A running CTFd instance ([CTFd setup](https://docs.ctfd.io/docs/deployment/installation))
+- [Poetry 1.8.0 or higher](https://python-poetry.org/docs/#installation).
+- Python 3.12 or higher.
+- A running CTFd instance ([CTFd setup](https://docs.ctfd.io/docs/deployment/installation)). [^1].
+
+[^1]: Or use the [demo instance](https://demo.ctfd.io).
 
 ### 1. Clone Repository
 
@@ -54,7 +51,9 @@ cd acucys-ctf
 ### 2. Install Dependencies
 
 ```bash
-npm install
+# Change `3.14` if you wish to use a different Python version
+poetry env use 3.14
+poetry install
 ```
 
 ### 3. Configure Environment
@@ -67,16 +66,15 @@ cp .env.example .env
 
 Fill in required values:
 
-- `DISCORD_TOKEN=<your discord bot token>`
-- `CTFD_URL=<your ctfd instance base url>`
-- `CTFD_API_TOKEN=<your CTFd admin token>`
-- `GUILD_ID=<discord server ID for dev commands>`
-- `DEV_ROLE_ID=<discord role ID for dev commands>`
+- `BOT_MODE=dev`
+- `BOT_TOKEN=<your discord bot token>`
+- `CTFD_ACCESS_TOKEN=<your CTFd admin token>`
+- `CTFD_INSTANCE_URL=<your ctfd instance base url>`
 
 ### 4. Run Bot
 
 ```bash
-npm run dev
+poetry run acucys-ctf
 ```
 
 This starts the discord bot in development mode.
@@ -84,5 +82,3 @@ This starts the discord bot in development mode.
 ## 🤝 Contributing
 
 Please refer to the [contributing guide](CONTRIBUTING.md) for more details.
-
-_</> with <3 by dec1bel_
