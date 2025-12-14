@@ -1,7 +1,7 @@
 [project]
-name = "acucys-ctf"
+name = "ctfd-discord-bot"
 version = "0.1.0"
-description = "Official Discord bot for the ACUCyS CTF event"
+description = "A discord bot to integrate with CTFd and provide useful features."
 authors = [
     { name = "PyPylia", email = "me@pypylia.dev" },
     { name = "Hirusha Adikari", email = "hirushaadi@gmail.com" },
@@ -25,4 +25,4 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry.scripts]
-acucys-ctf = "acucys_ctf.__main__:main"
+ctfd-discord-bot = "ctfd_discord_bot.__main__:main"

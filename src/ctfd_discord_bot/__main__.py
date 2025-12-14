@@ -5,12 +5,12 @@ from datetime import datetime
 import dotenv
 from loguru import logger
 
-from acucys_ctf import ACUCySCTFBot
-from acucys_ctf.utils.environment import BotMode, Config
+from ctfd_discord_bot import CTFdBot
+from ctfd_discord_bot.utils.environment import BotMode, Config
 
 
 async def async_main(config: Config):
-    async with ACUCySCTFBot(config) as client:
+    async with CTFdBot(config) as client:
         await client.start(config.bot_token, reconnect=True)
 
 

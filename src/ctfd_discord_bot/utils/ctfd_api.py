@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Any, Literal
 import typedload
 from aiohttp import ClientSession, ClientTimeout
 
-from acucys_ctf.utils.environment import Config
-from acucys_ctf.utils.errors import CTFdError
+from ctfd_discord_bot.utils.environment import Config
+from ctfd_discord_bot.utils.errors import CTFdError
 
 
 @dataclass

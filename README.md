@@ -1,21 +1,20 @@
 <div>
-  <img width="200" align="left" src="ACUCyS_CTF_Logo.png" alt="ACUCyS Logo">
-  <h1>ACUCyS CTF</h1>
+  <h1>CTFd Discord Bot</h1>
   <p>
-    A Discord bot designed for the ACUCyS CTF event, seamlessly integrating with
-    <a href="https://ctfd.io/">CTFd</a> to let users browse challenges, track progress on
-    leaderboards, and more — all from within Discord.
+    A Discord bot designed to seamlessly integrate with
+    <a href="https://ctfd.io/">CTFd</a> to let users browse challenges,
+    track progress on leaderboards, and more — all from within Discord.
   </p>
 </div>
 
 ## 📂 Project Structure
 
 ```
-acucys-ctf/
+ctfd-discord-bot/
 ├── emojis/             # Discord application emojis
 │
 ├── src/
-│   └── acusys_ctf/     # Project source root
+│   └── ctfd_discord_bot/     # Project source root
 │       ├── cogs/       # Discord slash commands
 │       ├── utils/      # Utility/helper functions
 │       ├── __init__.py # Main bot code
@@ -39,13 +38,16 @@ acucys-ctf/
 - Python 3.12 or higher.
 - A running CTFd instance ([CTFd setup](https://docs.ctfd.io/docs/deployment/installation)). [^1].
 
+> [!IMPORTANT]
+> This bot handles registration itself, you will need to disable the CTFd registration page in the admin panel.
+
 [^1]: Or use the [demo instance](https://demo.ctfd.io).
 
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/duca-club/acucys-ctf.git
-cd acucys-ctf
+git clone https://github.com/duca-club/ctfd-discord-bot.git
+cd ctfd-discord-bot
 ```
 
 ### 2. Install Dependencies
@@ -66,15 +68,23 @@ cp .env.example .env
 
 Fill in required values:
 
-- `BOT_MODE=dev`
-- `BOT_TOKEN=<your discord bot token>`
+- `BOT_MODE=dev` *(or prod)*
+- `BOT_TOKEN=<your Discord bot token>`
+- `EVENT_NAME=<your event name>`
+- `DISCORD_ID_FIELD=<the CTFd field ID for the discord user ID>`
 - `CTFD_ACCESS_TOKEN=<your CTFd admin token>`
-- `CTFD_INSTANCE_URL=<your ctfd instance base url>`
+- `CTFD_INSTANCE_URL=<your CTFd instance base url>`
+- `FEEDBACK_URL=<the url for the feedback form>`
+- `WEBHOOK_URL=<the url for the discord webhook>`
+- `WEBHOOK_FREQUENCY=<the frequency to check for new solves>`
+- `API_TIMEOUT=<the timeout on any API requests>`
+- `CACHE_TIMEOUT=<the timeout to cache any data>`
+- `REGISTER_TIMEOUT=<the timeout for someone to respond during registration>`
 
 ### 4. Run Bot
 
 ```bash
-poetry run acucys-ctf
+poetry run ctfd-discord-bot
 ```
 
 This starts the discord bot in development mode.

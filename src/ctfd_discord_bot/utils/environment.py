@@ -4,7 +4,7 @@ from enum import StrEnum
 from typing import Any, Self
 from urllib.parse import urlparse, urlunparse
 
-from acucys_ctf.utils.errors import ConfigError
+from ctfd_discord_bot.utils.errors import ConfigError
 
 
 def get_env_var(name: str, *, required: bool = True) -> str | None:
@@ -57,6 +57,7 @@ def parse_positive_int(value: str) -> int:
 class Config:
     ctfd_instance_url: str = field(metadata={"parser": normalize_url})
     ctfd_access_token: str
+    event_name: str
     webhook_url: str
     discord_id_field: int
     bot_token: str

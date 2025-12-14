@@ -9,9 +9,9 @@ from discord import app_commands
 from discord.ext import commands
 from loguru import logger
 
-from acucys_ctf import ACUCySCTFBot
-from acucys_ctf.utils.ctfd_api import Challenge, CTFd_API, Member, Score
-from acucys_ctf.views.scoreboard import Scoreboard, get_team_embed
+from ctfd_discord_bot import CTFdBot
+from ctfd_discord_bot.utils.ctfd_api import Challenge, CTFd_API, Member, Score
+from ctfd_discord_bot.views.scoreboard import Scoreboard, get_team_embed
 
 EMAIL_REGEX = r"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"
 MAX_DESC_LEN = 4096
@@ -21,7 +21,7 @@ class CtfD(commands.Cog):
     challenge_categories: dict[str, dict[int, tuple[str, int]]] = {}
     total_challenges: int = 0
 
-    def __init__(self, client: ACUCySCTFBot):
+    def __init__(self, client: CTFdBot):
         self.client = client
         self.ctfd_api = CTFd_API(client.config)
 
@@ -304,11 +304,11 @@ class CtfD(commands.Cog):
 
         await channel.send(
             embed=discord.Embed(
-                title="ACUCyS CTF Account Creation",
+                title=f"{self.client.config.event_name} Account Creation",
                 color=discord.Color.teal(),
                 timestamp=datetime.datetime.now(datetime.timezone.utc),
-                description="""
-Welcome to the ACUCyS CTF Account Creation.
+                description=f"""
+Welcome to the {self.client.config.event_name} Account Creation.
 To continue, please enter your preferred email address, you will have to verify this later.
 """,
             )
@@ -332,7 +332,7 @@ To continue, please enter your preferred email address, you will have to verify 
             if i == 4:
                 await channel.send(
                     embed=discord.Embed(
-                        title="ACUCyS CTF Account Creation",
+                        title=f"{self.client.config.event_name} Account Creation",
                         color=discord.Color.red(),
                         timestamp=datetime.datetime.now(datetime.timezone.utc),
                         description="""
@@ -345,7 +345,7 @@ Please try again later.
 
             await channel.send(
                 embed=discord.Embed(
-                    title="ACUCyS CTF Account Creation",
+                    title=f"{self.client.config.event_name} Account Creation",
                     color=discord.Color.red(),
                     timestamp=datetime.datetime.now(datetime.timezone.utc),
                     description="""
@@ -357,7 +357,7 @@ Please try again.
 
         await channel.send(
             embed=discord.Embed(
-                title="ACUCyS CTF Account Creation",
+                title=f"{self.client.config.event_name} Account Creation",
                 color=discord.Color.teal(),
                 timestamp=datetime.datetime.now(datetime.timezone.utc),
                 description="""
@@ -383,7 +383,7 @@ Thank you. Please enter your preferred username.
 
         await channel.send(
             embed=discord.Embed(
-                title="ACUCyS CTF Account Creation",
+                title=f"{self.client.config.event_name} Account Creation",
                 color=discord.Color.green(),
                 timestamp=datetime.datetime.now(datetime.timezone.utc),
                 description=f"""
@@ -398,7 +398,7 @@ You can login at `{self.client.config.ctfd_instance_url}/login`.
     async def register_timeout(self, channel: discord.DMChannel):
         await channel.send(
             embed=discord.Embed(
-                title="ACUCyS CTF Account Creation",
+                title=f"{self.client.config.event_name} Account Creation",
                 color=discord.Color.orange(),
                 timestamp=datetime.datetime.now(datetime.timezone.utc),
                 description="""
@@ -408,5 +408,5 @@ Account creation timed out.
         )
 
 
-async def setup(client: ACUCySCTFBot):
+async def setup(client: CTFdBot):
     await client.add_cog(CtfD(client))

@@ -3,10 +3,10 @@ from discord import app_commands
 from discord.ext import commands
 from loguru import logger
 
-from acucys_ctf.utils.environment import BotMode, Config
+from ctfd_discord_bot.utils.environment import BotMode, Config
 
 
-class ACUCySCTFBot(commands.Bot):
+class CTFdBot(commands.Bot):
     def __init__(self, config: Config):
         self.config = config
 
@@ -19,7 +19,7 @@ class ACUCySCTFBot(commands.Bot):
         COGS = ["general", "ctfd"]
 
         for cog in COGS:
-            await self.load_extension(f"acucys_ctf.cogs.{cog}")
+            await self.load_extension(f"{__name__}.cogs.{cog}")
             logger.info(f"Loaded: bot.cogs.{cog}")
 
         synced = await self.tree.sync()

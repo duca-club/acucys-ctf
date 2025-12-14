@@ -7,13 +7,13 @@ from discord import app_commands
 from discord.ext import commands
 from loguru import logger
 
-from acucys_ctf import ACUCySCTFBot
+from ctfd_discord_bot import CTFdBot
 
 
 class General(commands.Cog):
     start_time: float | None = None
 
-    def __init__(self, client: ACUCySCTFBot):
+    def __init__(self, client: CTFdBot):
         self.client = client
 
     @commands.Cog.listener()
@@ -31,7 +31,7 @@ class General(commands.Cog):
         # bot presence
         await self.client.change_presence(
             activity=discord.Activity(
-                type=discord.ActivityType.playing, name="ACUCyS CTF"
+                type=discord.ActivityType.playing, name=self.client.config.event_name
             )
         )
 
@@ -94,9 +94,9 @@ class General(commands.Cog):
             command_info += f"` - {command.description}\n{option_info}\n"
 
         embed = discord.Embed(
-            title="ACUCyS Bot Help",
-            description="""
-Welcome to the ACUCyS CTF bot!
+            title=f"{self.client.config.event_name} Bot Help",
+            description=f"""
+Welcome to the {self.client.config.event_name} bot!
 You can use this bot to register for the CTF, and view various bits of information about it.
 The following are all the commands supported by this bot:
 
@@ -107,5 +107,5 @@ The following are all the commands supported by this bot:
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
-async def setup(client: ACUCySCTFBot):
+async def setup(client: CTFdBot):
     await client.add_cog(General(client))

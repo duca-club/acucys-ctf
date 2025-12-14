@@ -3,7 +3,7 @@ import typing
 
 import discord
 
-from acucys_ctf.utils.ctfd_api import Score
+from ctfd_discord_bot.utils.ctfd_api import Score
 
 
 def get_team_embed(team: Score) -> discord.Embed:
