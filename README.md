@@ -11,22 +11,22 @@
 
 ```
 ctfd-discord-bot/
-├── emojis/             # Discord application emojis
+├── emojis/               # Discord application emojis
 │
 ├── src/
-│   └── ctfd_discord_bot/     # Project source root
-│       ├── cogs/       # Discord slash commands
-│       ├── utils/      # Utility/helper functions
-│       ├── __init__.py # Main bot code
-│       └── __main__.py # Bot entrypoint
+│   └── ctfd_discord_bot/ # Project source root
+│       ├── cogs/         # Discord slash commands
+│       ├── utils/        # Utility/helper functions
+│       ├── __init__.py   # Main bot code
+│       └── __main__.py   # Bot entrypoint
 │
-├── .env                # Environment variables
-├── .env.exampple       # Example environment variables
-├── .gitattributes      # Git config
-├── .gitignore          # Git ignore
-├── CONTRIBUTING.md     # Contributing guide
-├── poetry.lock         # Dependency lockfile
-├── pyproject.toml      # Project metadata & dependencies
+├── .env                  # Environment variables
+├── .env.exampple         # Example environment variables
+├── .gitattributes        # Git config
+├── .gitignore            # Git ignore
+├── CONTRIBUTING.md       # Contributing guide
+├── poetry.lock           # Dependency lockfile
+├── pyproject.toml        # Project metadata & dependencies
 └── README.md
 ```
 
@@ -40,6 +40,8 @@ ctfd-discord-bot/
 
 > [!IMPORTANT]
 > This bot handles registration itself, you will need to disable the CTFd registration page in the admin panel.
+>
+> You will also need to create a public uneditable field in CTFd to store the Discord User IDs.
 
 [^1]: Or use the [demo instance](https://demo.ctfd.io).
 
