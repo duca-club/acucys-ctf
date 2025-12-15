@@ -262,7 +262,7 @@ class CTFd_API:
 
     async def _refresh_cache(self):
         # Pages are one-indexed with 50 users per page, and we always want to check for another user
-        next_page = (self.user_count + 1) // 50 + 1
+        next_page = self.user_count // 50 + 1
         while next_page is not None:
             page = await self._parse_request(
                 "GET", f"users?page={next_page}", UsersRequest
