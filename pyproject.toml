@@ -1,6 +1,6 @@
 [project]
 name = "ctfd-discord-bot"
-version = "0.1.0"
+version = "1.0.0"
 description = "A discord bot to integrate with CTFd and provide useful features."
 authors = [
     { name = "PyPylia", email = "me@pypylia.dev" },
