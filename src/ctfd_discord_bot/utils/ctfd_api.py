@@ -274,7 +274,7 @@ class CTFd_API:
 
             for user in page.data:
                 discord_id = user.get_field(self.config.discord_id_field)
-                if discord_id is None:
+                if discord_id is None or discord_id.value == "":
                     continue
 
                 self.discord_id_cache[int(discord_id.value)] = user.id
@@ -355,9 +355,7 @@ class CTFd_API:
                     {
                         "value": str(discord_id),
                         "field_id": self.config.discord_id_field,
-                        "description": "",
                         "type": "text",
-                        "name": "Discord UserID",
                     }
                 ],
             },
@@ -398,7 +396,7 @@ class CTFd_API:
 
                 user = await self.get_user(solve.user.id)
                 discord_id = user.get_field(self.config.discord_id_field)
-                if discord_id is None:
+                if discord_id is None or discord_id.value == "":
                     continue
 
                 new_solves.add((discord_id.value, challenge.name))

@@ -7,18 +7,6 @@ from urllib.parse import urlparse, urlunparse
 from ctfd_discord_bot.utils.errors import ConfigError
 
 
-def get_env_var(name: str, *, required: bool = True) -> str | None:
-    value = os.getenv(name)
-
-    if required and value is None:
-        raise ConfigError(f"Missing required environment variable: {name}")
-
-    if value is not None:
-        return value.strip()
-
-    return value
-
-
 def normalize_url(url: str) -> str:
     (scheme, netloc, path, _, _, _) = urlparse(url, scheme="https")
 
@@ -72,10 +60,13 @@ class Config:
 
     def __init__(self):
         for cur_field in self.__dataclass_fields__.values():
-            field_value = get_env_var(
-                cur_field.name.upper(), required=cur_field.default is MISSING
-            )
-            if field_value is not None:
+            name = cur_field.name.upper()
+            value = os.getenv(name)
+
+            if cur_field.default is MISSING and value is None:
+                raise ConfigError(f"Missing required environment variable: {name}")
+
+            if value is not None:
 
                 def parser(val: str) -> Any:
                     return cur_field.type(val)
@@ -83,4 +74,4 @@ class Config:
                 if "parser" in cur_field.metadata:
                     parser = cur_field.metadata["parser"]
 
-                object.__setattr__(self, cur_field.name, parser(field_value))
+                object.__setattr__(self, cur_field.name, parser(value.strip()))
