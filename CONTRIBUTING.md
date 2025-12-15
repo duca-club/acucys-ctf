@@ -1,4 +1,4 @@
-# Contribution Guideline - CTFd Bot
+# Contribution Guideline - CTFd Discord Bot
 
 First off, thank you for considering contributing! We welcome all kinds of contributions — from bug reports and documentation fixes to new features and performance improvements. This guide will help you get started.
 
