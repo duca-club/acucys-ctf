@@ -1,3 +1,5 @@
+import traceback
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -31,13 +33,29 @@ class CTFdBot(commands.Bot):
     ):
         if isinstance(error, app_commands.CommandInvokeError):
             original = error.original
-            logger.error(
-                f"[{error.command.name}] {type(original).__name__}: {original}"
-            )
+            err_traceback = error.original.__traceback__
+            error_loc = error.command.name
+
+            if err_traceback is not None:
+                while err_traceback.tb_next is not None:
+                    err_traceback = err_traceback.tb_next
+
+                frame = err_traceback.tb_frame
+                while f"src/{__name__}" not in frame.f_code.co_filename.replace(
+                    "\\", "/"
+                ):
+                    frame = frame.f_back
+                    if frame is None:
+                        break
+
+                if frame is not None:
+                    error_loc += f" - {frame.f_code.co_qualname}:{frame.f_lineno}"
+
+            logger.error(f"[{error_loc}] {type(original).__name__}: {original}")
 
             extra = ""
             if self.config.bot_mode == BotMode.DEVELOPMENT:
-                extra = f"\n```{original}```"
+                extra = f"\n```{''.join(traceback.format_exception(error.original))}```"
 
             await interaction.followup.send(
                 "An unexpected internal error occurred while executing the command"
@@ -60,7 +78,7 @@ class CTFdBot(commands.Bot):
 
             extra = ""
             if self.config.bot_mode == BotMode.DEVELOPMENT:
-                extra = f"\n```{error}```"
+                extra = f"\n```{''.join(traceback.format_exception(error))}```"
 
             await interaction.followup.send(
                 "An unknown error occurred." + extra,
