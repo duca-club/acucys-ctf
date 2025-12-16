@@ -5,6 +5,7 @@ description = "A discord bot to integrate with CTFd and provide useful features.
 authors = [
     { name = "PyPylia", email = "me@pypylia.dev" },
     { name = "Hirusha Adikari", email = "hirushaadi@gmail.com" },
+    { name = "Pasindu P", email = "hello@dec1bel.dev" }
 ]
 license = { text = "GPLv3" }
 readme = "README.md"

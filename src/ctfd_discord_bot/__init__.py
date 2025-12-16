@@ -1,7 +1,9 @@
+import asyncio
 import traceback
 from typing import Any
 
 import discord
+from aiohttp import ClientSession, ClientTimeout
 from discord import app_commands
 from discord.ext import commands
 from loguru import logger
@@ -28,6 +30,36 @@ class CTFdBot(commands.Bot):
         synced = await self.tree.sync()
         logger.success(f"Synced {len(synced)} Slash Commands globally.")
         logger.debug(f"Synced: {[cmd.name for cmd in synced]}")
+
+    async def on_ready(self):
+        if (
+            self.config.bot_mode == BotMode.PRODUCTION
+            and self.config.push_url is not None
+        ):
+            asyncio.create_task(self._push_monitor_task())
+            logger.info("Started push monitor task for Uptime Kuma")
+
+    async def _push_monitor_task(self):
+        """Background task that calls the push URL every 60 seconds."""
+        if self.config.push_url is None:
+            return
+
+        while True:
+            try:
+                push_url = self.config.push_url
+
+                async with ClientSession(timeout=ClientTimeout(total=10)) as session:
+                    async with session.get(push_url) as response:
+                        if response.status == 200:
+                            logger.info("Successfully sent heartbeat to Uptime Kuma")
+                        else:
+                            logger.warning(
+                                f"Uptime Kuma push returned status {response.status}"
+                            )
+            except Exception as e:
+                logger.error(f"Error sending heartbeat to Uptime Kuma: {e}")
+
+            await asyncio.sleep(60)
 
     async def on_app_command_error(
         self, interaction: discord.Interaction, error: app_commands.AppCommandError

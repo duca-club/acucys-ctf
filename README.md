@@ -62,6 +62,11 @@ poetry install
 
 ### 3. Configure Environment
 
+> [!IMPORTANT]
+>
+> This bot supports sending heartbeats to an Uptime Kuma monitor. Please make sure that the API path for your Uptime Kuma instance `/api/push/*` is publicly reachable.
+> Note: only enabled if the bot is running in production mode and push url is set.
+
 Create a `.env` file using the provided `.env.example` template:
 
 ```bash
@@ -82,6 +87,7 @@ Fill in required values:
 - `API_TIMEOUT=<the timeout on any API requests>`
 - `CACHE_TIMEOUT=<the timeout to cache any data>`
 - `REGISTER_TIMEOUT=<the timeout for someone to respond during registration>`
+- `PUSH_URL=<your Uptime Kuma monitor push url>`
 
 ### 4. Run Bot
 
