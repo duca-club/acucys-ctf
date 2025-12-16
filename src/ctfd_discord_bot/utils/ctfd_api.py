@@ -37,7 +37,7 @@ class Score:
 @dataclass
 class Challenge:
     id: int
-    type: Literal["multiple_choice", "standard", "code"]
+    type: str
     name: str
     value: int
     solves: int
