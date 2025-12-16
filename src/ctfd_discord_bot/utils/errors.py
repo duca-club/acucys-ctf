@@ -5,6 +5,6 @@ class ConfigError(Exception):
 
 
 class CTFdError(Exception):
-    """Raised when the CTFd API returns and error."""
+    """Raised when the CTFd API returns an error."""
 
     pass
