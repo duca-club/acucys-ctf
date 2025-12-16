@@ -302,7 +302,17 @@ class CTFd_API:
             if user_id is None:
                 return None
 
-        return await self.get_user(user_id)
+        try:
+            user = await self.get_user(user_id)
+        except CTFdError as err:
+            if err.args != ("Non-200 status code: 404 Not Found",):
+                raise err
+
+            user = None
+            if discord_id in self.discord_id_cache:
+                del self.discord_id_cache[discord_id]
+
+        return user
 
     async def get_full_team(self, team_id: int) -> FullTeam:
         return (
