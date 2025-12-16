@@ -50,7 +50,9 @@ class CtfD(commands.Cog):
             return
 
         # Sort by position (rank)
-        scoreboard = sorted(scoreboard, key=lambda x: x.pos)[:10]
+        scoreboard = sorted(
+            scoreboard, key=lambda x: x.pos if x.pos is not None else 1e9
+        )[:10]
 
         # Default = show full list view
         view = Scoreboard(scoreboard)
@@ -255,11 +257,19 @@ class CtfD(commands.Cog):
                 )
             )
 
+        pos = None
+        if full_team.place is not None:
+            pos = re.sub("[^0-9]", "", full_team.place)
+            if pos == "":
+                pos = None
+            else:
+                pos = int(pos)
+
         await interaction.followup.send(
             ephemeral=True,
             embed=get_team_embed(
                 Score(
-                    pos=int(re.sub("[^0-9]", "", full_team.place)),
+                    pos=pos,
                     account_id=full_team.id,
                     account_url=f"teams/{full_team.id}",
                     account_type="team",

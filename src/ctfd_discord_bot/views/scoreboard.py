@@ -7,10 +7,15 @@ from ctfd_discord_bot.utils.ctfd_api import Score
 
 
 def get_team_embed(team: Score) -> discord.Embed:
+    desc_prefix = title_prefix = ""
+    if team.pos is not None:
+        title_prefix = f"🚩 {team.pos}. "
+        desc_prefix = f"**Rank**: *{team.pos}*\n"
+
     embed = discord.Embed(
-        title=f"🚩 {team.pos}. Team *{team.name}*",
+        title=title_prefix + f"Team *{team.name}*",
         color=discord.Color.gold(),
-        description=f"**Rank**: *{team.pos}*\n**Total Score**: *{team.score}*",
+        description=desc_prefix + f"**Total Score**: *{team.score}*",
         timestamp=datetime.datetime.now(datetime.timezone.utc),
     )
 

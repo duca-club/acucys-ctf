@@ -22,7 +22,7 @@ class Member:
 
 @dataclass
 class Score:
-    pos: int
+    pos: int | None
     account_id: int
     account_url: str
     account_type: Literal["team"]
@@ -117,7 +117,7 @@ class Team:
 @dataclass
 class FullTeam(Team):
     members: list[int]
-    place: str
+    place: str | None
     score: int
 
 
