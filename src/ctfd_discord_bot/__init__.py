@@ -1,4 +1,5 @@
 import traceback
+from typing import Any
 
 import discord
 from discord import app_commands
@@ -31,6 +32,14 @@ class CTFdBot(commands.Bot):
     async def on_app_command_error(
         self, interaction: discord.Interaction, error: app_commands.AppCommandError
     ):
+        async def response_func(*args: Any, **kwargs: Any):
+            # for some reason, just checking interaction.response.is_done does not work
+            # and interaction.followup is in invalid state until a response is sent
+            try:
+                await interaction.response.send_message(*args, **kwargs)
+            except discord.InteractionResponded:
+                await interaction.followup.send(*args, **kwargs)
+
         if isinstance(error, app_commands.CommandInvokeError):
             original = error.original
             err_traceback = error.original.__traceback__
@@ -57,20 +66,20 @@ class CTFdBot(commands.Bot):
             if self.config.bot_mode == BotMode.DEVELOPMENT:
                 extra = f"\n```{''.join(traceback.format_exception(error.original))}```"
 
-            await interaction.followup.send(
+            await response_func(
                 "An unexpected internal error occurred while executing the command"
                 + extra,
                 ephemeral=True,
             )
 
-        elif isinstance(error, app_commands.CheckFailure):
-            await interaction.followup.send(
-                "You don't have permission to use this command.", ephemeral=True
+        elif isinstance(error, app_commands.CommandOnCooldown):
+            await response_func(
+                "This command is on cooldown, please try again later.", ephemeral=True
             )
 
-        elif isinstance(error, app_commands.CommandOnCooldown):
-            await interaction.followup.send(
-                "This command is on cooldown, please try again later.", ephemeral=True
+        elif isinstance(error, app_commands.CheckFailure):
+            await response_func(
+                "You don't have permission to use this command.", ephemeral=True
             )
 
         else:
@@ -80,7 +89,7 @@ class CTFdBot(commands.Bot):
             if self.config.bot_mode == BotMode.DEVELOPMENT:
                 extra = f"\n```{''.join(traceback.format_exception(error))}```"
 
-            await interaction.followup.send(
+            await response_func(
                 "An unknown error occurred." + extra,
                 ephemeral=True,
             )

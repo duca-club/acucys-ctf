@@ -15,6 +15,8 @@ from ctfd_discord_bot.views.scoreboard import Scoreboard, get_team_embed
 
 EMAIL_REGEX = r"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])"
 MAX_DESC_LEN = 4096
+REGISTER_COOLDOWN = 60
+REGULAR_COOLDOWN = 3
 
 
 class CtfD(commands.Cog):
@@ -42,6 +44,7 @@ class CtfD(commands.Cog):
         await self.ctfd_api.close()
 
     @app_commands.command(name="scoreboard", description="Show the current scoreboard.")
+    @app_commands.checks.cooldown(1, REGULAR_COOLDOWN)
     async def scoreboard(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking=True, ephemeral=True)
 
@@ -63,6 +66,7 @@ class CtfD(commands.Cog):
 
     @app_commands.command(name="challenges", description="Get the challenges list.")
     @app_commands.describe(category="Filter challenges by category")
+    @app_commands.checks.cooldown(1, REGULAR_COOLDOWN)
     async def challenges(self, interaction: discord.Interaction, category: str | None):
         if category == "All":
             category = None
@@ -118,6 +122,7 @@ class CtfD(commands.Cog):
         name="progress", description="Get the solve progress of your team."
     )
     @app_commands.describe(category="Filter solves by challenge category")
+    @app_commands.checks.cooldown(1, REGULAR_COOLDOWN)
     async def progress(self, interaction: discord.Interaction, category: str | None):
         if category == "All":
             category = None
@@ -214,6 +219,7 @@ class CtfD(commands.Cog):
     @app_commands.describe(
         team="The team name to check. Leave blank for your own team."
     )
+    @app_commands.checks.cooldown(1, REGULAR_COOLDOWN)
     async def team(self, interaction: discord.Interaction, team: str | None):
         await interaction.response.defer(thinking=True, ephemeral=True)
 
@@ -294,6 +300,7 @@ class CtfD(commands.Cog):
         return filtered[:25]
 
     @app_commands.command(name="register", description="Register for the CTF.")
+    @app_commands.checks.cooldown(1, REGISTER_COOLDOWN)
     async def register_user(self, interaction: discord.Interaction):
         if interaction.user.id in self.current_registrations:
             await interaction.response.send_message(
