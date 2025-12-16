@@ -400,7 +400,7 @@ Thank you. Please enter your preferred username.
 Thank you. Your account has been created successfully!
 Your temporary password is `{password}`, and you will be prompted to change it upon login.
 You can change other information such as your website, and join a team once logged in.
-You can login at `{self.client.config.ctfd_instance_url}/login`.
+You can [login here.]({self.client.config.ctfd_instance_url}/login).
 """,
             )
         )
