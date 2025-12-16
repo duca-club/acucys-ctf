@@ -20,6 +20,7 @@ MAX_DESC_LEN = 4096
 class CtfD(commands.Cog):
     challenge_categories: dict[str, dict[int, tuple[str, int]]] = {}
     total_challenges: int = 0
+    current_registrations: set[int] = set()
 
     def __init__(self, client: CTFdBot):
         self.client = client
@@ -294,6 +295,13 @@ class CtfD(commands.Cog):
 
     @app_commands.command(name="register", description="Register for the CTF.")
     async def register_user(self, interaction: discord.Interaction):
+        if interaction.user.id in self.current_registrations:
+            await interaction.response.send_message(
+                "You already have an ongoing registration, check your DMs.",
+                ephemeral=True,
+            )
+            return
+
         await interaction.response.defer(thinking=True, ephemeral=True)
 
         user = await self.ctfd_api.get_user_from_discord(interaction.user.id)
@@ -307,6 +315,7 @@ class CtfD(commands.Cog):
             "Check your DMs to continue the account creation process.", ephemeral=True
         )
 
+        self.current_registrations.add(interaction.user.id)
         channel = await interaction.user.create_dm()
 
         def message_check(msg: discord.Message) -> bool:
@@ -333,13 +342,14 @@ To continue, please enter your preferred email address.
                     timeout=self.client.config.register_timeout,
                 )
             except TimeoutError:
-                return await self.register_timeout(channel)
+                return await self.register_timeout(interaction.user.id, channel)
 
             if re.search(EMAIL_REGEX, msg.content) is not None:
                 email = msg.content
                 break
 
             if i == 4:
+                self.current_registrations.remove(interaction.user.id)
                 await channel.send(
                     embed=discord.Embed(
                         title=f"{self.client.config.event_name} Account Creation",
@@ -383,7 +393,7 @@ Thank you. Please enter your preferred username.
                 timeout=self.client.config.register_timeout,
             )
         except TimeoutError:
-            return await self.register_timeout(channel)
+            return await self.register_timeout(interaction.user.id, channel)
 
         # Doesn't have to be cryptographically secure. Is only a temporary password used until they login.
         password = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
@@ -400,12 +410,15 @@ Thank you. Please enter your preferred username.
 Thank you. Your account has been created successfully!
 Your temporary password is `{password}`, and you will be prompted to change it upon login.
 You can change other information such as your website, and join a team once logged in.
-You can [login here.]({self.client.config.ctfd_instance_url}/login).
+You can [login here.]({self.client.config.ctfd_instance_url}/login)
 """,
             )
         )
 
-    async def register_timeout(self, channel: discord.DMChannel):
+        self.current_registrations.remove(interaction.user.id)
+
+    async def register_timeout(self, id: int, channel: discord.DMChannel):
+        self.current_registrations.remove(id)
         await channel.send(
             embed=discord.Embed(
                 title=f"{self.client.config.event_name} Account Creation",
