@@ -319,7 +319,7 @@ class CtfD(commands.Cog):
                 timestamp=datetime.datetime.now(datetime.timezone.utc),
                 description=f"""
 Welcome to the {self.client.config.event_name} Account Creation.
-To continue, please enter your preferred email address, you will have to verify this later.
+To continue, please enter your preferred email address.
 """,
             )
         )
