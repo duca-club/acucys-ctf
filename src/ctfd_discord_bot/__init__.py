@@ -20,7 +20,7 @@ class CTFdBot(commands.Bot):
 
         for cog in COGS:
             await self.load_extension(f"{__name__}.cogs.{cog}")
-            logger.info(f"Loaded: bot.cogs.{cog}")
+            logger.debug(f"Loaded: bot.cogs.{cog}")
 
         synced = await self.tree.sync()
         logger.success(f"Synced {len(synced)} Slash Commands globally.")

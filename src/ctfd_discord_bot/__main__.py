@@ -1,5 +1,6 @@
 import asyncio
 import os
+import sys
 from datetime import datetime
 
 import dotenv
@@ -23,11 +24,24 @@ def main():
         os.makedirs(log_dir)
 
     log_filename = datetime.now().strftime("%Y-%m-%d-%H-%M-%S.log")
+    level = "DEBUG" if config.bot_mode == BotMode.DEVELOPMENT else "INFO"
+
+    logger.remove()  # remove default handler
+
+    logger.add(sys.stderr, level="ERROR")
+    logger.add(
+        sys.stdout,
+        level=level,
+        # avoid duplication of errors in console, since stderr often is piped to stdout
+        filter=lambda record: record["level"].no <= logger.level("WARNING").no,
+    )
+
     logger.add(
         os.path.join(log_dir, log_filename),
-        level="DEBUG" if config.bot_mode == BotMode.DEVELOPMENT else "INFO",
+        level=level,
         format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}",
         rotation="2 MB",
+        diagnose=config.bot_mode == BotMode.DEVELOPMENT,
     )
 
     asyncio.run(async_main(config))
