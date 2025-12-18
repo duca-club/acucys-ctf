@@ -57,7 +57,7 @@ class Config:
     bot_mode: BotMode = field(
         default=BotMode.DEVELOPMENT, metadata={"parser": BotMode.parse}
     )
-    push_url: str = field(default=None, metadata={"parser": normalize_url})
+    push_url: str | None = field(default=None, metadata={"parser": normalize_url})
 
     def __init__(self):
         for cur_field in self.__dataclass_fields__.values():
