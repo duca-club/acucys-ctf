@@ -51,7 +51,7 @@ class CTFdBot(commands.Bot):
                 async with ClientSession(timeout=ClientTimeout(total=10)) as session:
                     async with session.get(push_url) as response:
                         if response.status == 200:
-                            logger.info("Successfully sent heartbeat to Uptime Kuma")
+                            logger.debug("Successfully sent heartbeat to Uptime Kuma")
                         else:
                             logger.warning(
                                 f"Uptime Kuma push returned status {response.status}"
