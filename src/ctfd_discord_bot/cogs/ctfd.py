@@ -328,17 +328,28 @@ class CtfD(commands.Cog):
         def message_check(msg: discord.Message) -> bool:
             return msg.channel.id == channel.id and msg.author.id == interaction.user.id
 
-        await channel.send(
-            embed=discord.Embed(
-                title=f"{self.client.config.event_name} Account Creation",
-                color=discord.Color.teal(),
-                timestamp=datetime.datetime.now(datetime.timezone.utc),
-                description=f"""
+        try:
+            await channel.send(
+                embed=discord.Embed(
+                    title=f"{self.client.config.event_name} Account Creation",
+                    color=discord.Color.teal(),
+                    timestamp=datetime.datetime.now(datetime.timezone.utc),
+                    description=f"""
 Welcome to the {self.client.config.event_name} Account Creation.
 To continue, please enter your preferred email address.
 """,
+                )
             )
-        )
+        except discord.Forbidden as exc:
+            # 50007 is the error code for being unable to send a message to a user
+            if exc.code != 50007:
+                raise exc
+
+            await interaction.followup.send(
+                "You do not have DMs enabled. Please enable them to register or contact an admin.",
+                ephemeral=True,
+            )
+            return
 
         email: str = ""
         for i in range(5):
