@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import typedload
 from aiohttp import ClientSession, ClientTimeout
+from loguru import logger
 
 from ctfd_discord_bot.utils.environment import Config
 from ctfd_discord_bot.utils.errors import CTFdError
@@ -234,7 +235,7 @@ class CTFd_API:
             },
         )
 
-        asyncio.create_task(self._webhook_task())
+        self._webhook_manager()
 
     async def close(self):
         await self.session.close()
@@ -377,6 +378,10 @@ class CTFd_API:
     async def _webhook_task(self):
         new_solves: set[tuple[Any, str]] = set()
         is_init = len(self.challenge_solves) == 0
+
+        if not is_init:
+            await asyncio.sleep(self.config.webhook_frequency)
+
         total_solves = await self._parse_request(
             "GET", "statistics/challenges/solves", SolveStatisticsRequest
         )
@@ -427,5 +432,13 @@ class CTFd_API:
                     },
                 )
 
-        await asyncio.sleep(self.config.webhook_frequency)
-        asyncio.create_task(self._webhook_task())
+    def _webhook_manager(self, task: asyncio.Task[None] | None = None):
+        if task is not None and (exc := task.exception()) is not None:
+            warn = isinstance(exc, asyncio.TimeoutError)
+            logger.log(
+                "WARNING" if warn else "ERROR",
+                f"[Webhook Task] {type(exc).__name__}: {exc}",
+            )
+
+        task = asyncio.create_task(self._webhook_task())
+        task.add_done_callback(self._webhook_manager)

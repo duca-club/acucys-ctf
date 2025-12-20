@@ -54,10 +54,10 @@ class CTFdBot(commands.Bot):
                             logger.debug("Successfully sent heartbeat to Uptime Kuma")
                         else:
                             logger.warning(
-                                f"Uptime Kuma push returned status {response.status}"
+                                f"[Uptime Kuma] RuntimeError: Push returned status {response.status}."
                             )
-            except Exception as e:
-                logger.error(f"Error sending heartbeat to Uptime Kuma: {e}")
+            except Exception as exc:
+                logger.error(f"[Uptime Kuma] {type(exc).__name__}: {exc}")
 
             await asyncio.sleep(60)
 
